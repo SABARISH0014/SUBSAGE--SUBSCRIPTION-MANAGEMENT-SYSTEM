@@ -13,7 +13,6 @@ const crypto = require('crypto'); // For generating secure tokens
 
 
 const app = express();
-const PORT = 3000;
 
 
 // Middleware for parsing JSON and form data
