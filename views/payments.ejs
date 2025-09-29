@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - SubSage</title>
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+    <link rel="stylesheet" href="/css/payments.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h1>Payment Details</h1>
+    
+    <a href="/dashboard">
+        <img src="/images/dashboard logo.png" alt="Dashboard Icon" class="dashboard-Icon">
+    </a>
+    
+    <button id="theme-toggle">
+        <img id="theme-icon" src="/images/moon.png" alt="Switch to dark mode" />
+    </button>
+    
+    <div class="form-box">
+        <form id="payment-form">
+            <div>
+                <label for="user_id">User ID:</label>
+                <input type="text" id="user_id" name="user_id" value="<%= user_id %>" readonly>
+            </div>
+
+            <!-- Subscription ID Dropdown -->
+            <div>
+                <label for="subscription_id">Subscription ID:</label>
+                <select id="subscription_id" name="subscription_id" onchange="updateSubscriptionDetails()">
+                    <% subscriptions.forEach(function(subscription, index) { %>
+                        <option value="<%= subscription.id %>" 
+                                data-name="<%= subscription.name %>"
+                                data-type="<%= subscription.type %>"
+                                data-amount="<%= subscription.amount %>"
+                                <%= index === 0 ? 'selected' : '' %>>
+                            <%= subscription.id %> - <%= subscription.name %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <!-- Subscription Details -->
+            <div>
+                <label for="subscription_name">Subscription Name:</label>
+                <input type="text" id="subscription_name" name="subscription_name" value="<%= subscriptions[0] ? subscriptions[0].name : '' %>" readonly>
+            </div>
+            <div>
+                <label for="subscription_type">Subscription Type:</label>
+                <input type="text" id="subscription_type" name="subscription_type" value="<%= subscriptions[0] ? subscriptions[0].type : '' %>" readonly>
+            </div>
+            <div>
+                <label for="amount">Amount:</label>
+                <input type="text" id="amount" name="amount" value="<%= subscriptions[0] ? subscriptions[0].amount : '' %>" readonly>
+            </div>
+
+            <!-- Payment Type Dropdown -->
+            <div>
+                <label for="payment_type">Payment Type:</label>
+                <select id="payment_type" name="payment_type">
+                    <option value="normal">Normal</option>
+                    <option value="extend" selected>Extend</option>
+                </select>
+            </div>
+            <% if (message) { %>
+                <p id="error-message"><%= message %></p>
+            <% } %>
+              <!-- Stripe Official Checkout Button -->
+    <button id="checkout-button" class="stripe-button" type="button">Pay with Stripe</button>
+
+    <div class="history-container">
+        <a href="/transaction-history" class="history-link">View Transaction History</a>
+    </div>
+        </form>
+           
+      
+        
+     
+    </div>
+    
+
+<script>
+    function updateSubscriptionDetails() {
+        const selectedOption = document.querySelector('#subscription_id').selectedOptions[0];
+        const subscriptionName = selectedOption.getAttribute('data-name');
+        const subscriptionType = selectedOption.getAttribute('data-type');
+        const subscriptionAmount = selectedOption.getAttribute('data-amount');
+
+        document.getElementById('subscription_name').value = subscriptionName;
+        document.getElementById('subscription_type').value = subscriptionType;
+        document.getElementById('amount').value = subscriptionAmount;
+    }
+
+    // Call this once when the page loads to set the default values
+    updateSubscriptionDetails();
+
+
+    document.getElementById('checkout-button').addEventListener('click', async () => {
+        const form = document.getElementById('payment-form');
+        const formData = new FormData(form);
+        
+        // Create an object from the FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send the data to the backend to create the Stripe checkout session
+        const response = await fetch('/payments/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+        
+        if (result.url) {
+            // Redirect to Stripe Checkout if the session was created successfully
+            window.location.href = result.url;
+        } else {
+            console.error('Error creating checkout session:', result.error);
+        }
+    });
+
+
+        // Theme toggle functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'dark');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.src = '/images/sun.png';
+            themeIcon.alt = 'Switch to light mode';
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.src = '/images/moon.png';
+            themeIcon.alt = 'Switch to dark mode';
+        }
+
+        themeToggleBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                themeIcon.src = '/images/moon.png';
+                themeIcon.alt = 'Switch to dark mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                themeIcon.src = '/images/sun.png';
+                themeIcon.alt = 'Switch to light mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
+
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+</body>
+</html>

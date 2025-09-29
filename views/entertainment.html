@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entertainment Services</title>
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+    <style>
+     /* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Variables for Light and Dark Modes */
+body.dark-mode {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --primary-color: #007bff;
+    --secondary-color: #0056b3;
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.726);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+}
+
+:root {
+    --bg-color: #121212;
+    --text-color: #fff;
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(0, 0, 0, 0.774);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --button-bg: linear-gradient(45deg, #4a90e2, #357abd);
+    --button-hover-bg: linear-gradient(45deg, #357abd, #4a90e2);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+}
+
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    background-image: url('/images/features-bg.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-image: url('/images/features.jpg'); /* Image for dark mode */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    font-size: 25px;
+    color: var(--text-color);
+    margin: 20px 0;
+}
+
+/* Logo Image Styles */
+header img {
+    width: 60px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    position: absolute;
+    top: 30px; /* Adjust spacing from the top */
+    left: 20px; /* Adjust spacing from the left */
+}
+/* Hover Effect for Header Logo */
+header img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)); /* Enhanced shadow on hover */
+}
+
+/* Dark Mode Header Logo Styles */
+body.dark-mode header img {
+    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3)); /* Adjust shadow for dark mode */
+}
+
+/* Dark Mode Hover Effect for Header Logo */
+body.dark-mode header img:hover {
+    filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced shadow on hover in dark mode */
+}
+/* Navigation Menu */
+.nav-menu {
+    display: flex;
+    gap: 50px;
+    justify-content: center;
+    margin-top: 40px;
+    text-decoration: #0056b3;
+    position: relative;
+}
+
+/* Navigation Menu Links */
+.nav-menu a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 25px;
+    position: relative;
+    transition: color 0.3s ease-in-out;
+}
+
+.nav-menu a::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50%;
+    height: 4px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+.nav-menu a:hover::after {
+    width: 100%;
+    background-color: var(--secondary-color);
+}
+
+/* Categories Section */
+.categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+/* Service Box Styles */
+.service-box {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 50px;
+}
+
+.service-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px var(--card-shadow);
+    width: 250px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+}
+
+.service-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.service-card img {
+    width: 100px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.service-card h2 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.service-card p {
+    font-size: 1rem;
+    color: var(--text-color);
+}
+/* Light and dark mode colors */
+:root {
+    --button-bg-color: #007bff;
+    --button-hover-bg-color: #0056b3;
+    --button-text-color: #ffffff;
+}
+
+[data-theme="dark"] {
+    --button-bg-color: #1f6feb;
+    --button-hover-bg-color: #1450a3;
+    --button-text-color: #ffffff;
+}
+/* Button base styles */
+.btn {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0; /* Initially invisible */
+    visibility: hidden; /* Initially hidden */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    position: relative; /* For visibility trigger */
+}
+
+
+/* Show button when the cursor is near */
+.service-card:hover .btn,
+.service-card:focus-within .btn {
+    opacity: 1; /* Fully visible */
+    visibility: visible; /* Make it appear */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Hover effect on the button */
+.btn:hover {
+    background-color: var(--button-hover-bg-color);
+    transform: scale(1.1); /* Additional zoom on hover */
+}
+
+/* Active effect */
+.btn:active {
+    transform: scale(0.95); /* Slight shrink on click */
+}
+
+/* Specific margin-top for each button */
+.service-card:nth-child(1) .btn { /* First button (Amazon Prime) */
+    margin-top: 20px;
+}
+
+.service-card:nth-child(2) .btn { /* Second button (Netflix) */
+    margin-top: 45px;
+}
+
+.service-card:nth-child(3) .btn { /* Third button (Disney+) */
+    margin-top: 20px;
+}
+
+.service-card:nth-child(4) .btn { /* Fourth button (Spotify) */
+    margin-top: 45px;
+}
+
+/* Theme Toggle */
+#theme-toggle {
+    position: fixed;
+    top: 40px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+}
+
+#theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+
+/* Footer */
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none; /* Removes the background color */
+    color: var(--text-color);
+    border-radius: 0; /* Removes the rounded corners */
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+/* Card Styles */
+.card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 30px var(--card-shadow);
+    transition: transform 1.5s ease-in-out, opacity 1.5s ease-in-out, filter 1.5s ease-in-out;
+    opacity: 0;
+    width: 45%;
+    height: 300px;
+    max-width: 350px;
+    position: relative;
+    visibility: hidden;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(10px);
+    bottom: -60px;
+    margin-bottom: 30px;
+}
+
+.card-1 {
+    transform: translateX(100%) scale(0.9) blur(10px) translateY(20px);
+}
+
+.card-2 {
+    transform: translateX(-100%) scale(0.9) blur(10px) translateY(20px);
+}
+
+.card-3 {
+    transform: translateX(100%) scale(0.9) blur(10px) translateY(20px);
+}
+
+.card-4 {
+    transform: translateX(-100%) scale(0.9) blur(10px) translateY(25px);
+}
+
+.card.visible {
+    transform: translateX(0) scale(1) blur(0) translateY(0);
+    opacity: 1;
+    visibility: visible;
+    filter: blur(0);
+}
+
+.card-1.visible, .card-3.visible {
+    align-self: flex-start;
+    margin-left: 100px;
+}
+
+.card-2.visible, .card-4.visible {
+    align-self: flex-end;
+    margin-right: 100px;
+}
+
+.card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.card h2 {
+    font-size: 30px;
+    color: var(--primary-color);
+}
+
+.card p {
+    font-size: 25px;
+    color: var(--text-color);
+}
+/* Default color for light mode */
+.service-card h2 {
+    color:#0056b3; /* Light blue color for light mode */
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+    .service-card h2 {
+        color: #007bff;  /* Dark blue color for dark mode */
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .service {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .service img {
+        width: 80px;
+        margin-bottom: 15px;
+    }
+}
+    </style>
+</head>
+<body>
+ <!-- Header -->
+ <header>
+    <h1>Our Entertainment Services</h1>
+    <a href="/dashboard">
+        <img src="images/entertainment-icon.png" alt="Entertainment Logo">
+    </a>        
+</header>
+
+    <!-- Service Cards -->
+<div class="service-box">
+    <!-- Amazon Prime -->
+    <div class="service-card">
+        <img src="images/amazon-prime.jpg" alt="Amazon Prime Logo">
+        <h2>Amazon Prime</h2>
+        <p>Enjoy unlimited movies, TV shows, and exclusive Prime Originals with Amazon Prime Video.</p>
+        <button class="btn" onclick="redirectToAddSubscription('amazon_prime')">Add Subscription</button>
+    </div>
+
+    <!-- Netflix -->
+    <div class="service-card">
+        <img src="images/netflix-new.png" alt="Netflix Logo">
+        <h2>Netflix</h2>
+        <p>Stream the latest movies, TV shows, and Netflix Originals with a subscription to Netflix.</p>
+        <button class="btn" onclick="redirectToAddSubscription('netflix')">Add Subscription</button>
+    </div>
+
+    <!-- Disney+ -->
+    <div class="service-card">
+        <img src="images/disney-plus.jpg" alt="Disney+ Logo">
+        <h2>Disney+</h2>
+        <p>Access Disney, Pixar, Marvel, Star Wars, and National Geographic content with Disney+.</p>
+        <button class="btn" onclick="redirectToAddSubscription('disney_plus')">Add Subscription</button>
+    </div>
+
+    <!-- Spotify -->
+    <div class="service-card">
+        <img src="images/spotify-new.png" alt="Spotify Logo">
+        <h2>Spotify</h2>
+        <p>Stream millions of songs and podcasts with Spotify Premium or free service.</p>
+        <button class="btn" onclick="redirectToAddSubscription('spotify')">Add Subscription</button>
+    </div>
+</div>
+
+<script>
+    // Redirect to add subscription form with prefilled name and type
+    function redirectToAddSubscription(subscriptionName, Type) {
+        const typeValue = Type || 'entertainment'; // Default to 'Entertainment' if Type is undefined or null
+        window.location.href = `/addsubscription?name=${encodeURIComponent(subscriptionName)}&type=${encodeURIComponent(typeValue)}`;
+    }
+    </script>
+    
+    
+    
+
+
+    
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle">
+        <img id="theme-icon" src="images/moon.png" alt="Switch to dark mode">
+    </button>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+
+    <script>
+// Theme toggle functionality
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const body = document.body;
+
+// Set the initial theme to light mode (default with moon icon)
+if (!localStorage.getItem('theme')) {
+    localStorage.setItem('theme', 'light'); // Default to light mode
+}
+
+// Apply the stored theme preference
+if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+    themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+    themeIcon.alt = 'Switch to light mode';
+} else {
+    body.classList.remove('dark-mode');
+    themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+    themeIcon.alt = 'Switch to dark mode';
+}
+
+// Toggle theme on button click
+themeToggleBtn.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    if (body.classList.contains('dark-mode')) {
+        themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+        themeIcon.alt = 'Switch to light mode';
+        localStorage.setItem('theme', 'dark'); // Save dark mode preference
+    } else {
+        themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+        themeIcon.alt = 'Switch to dark mode';
+        localStorage.setItem('theme', 'light'); // Save light mode preference
+    }
+});
+
+
+
+    </script>
+
+</body>
+</html>

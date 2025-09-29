@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Subscription</title>
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+    <link rel="stylesheet" href="/css/update-subscription.css"> <!-- Link to your styles -->
+</head>
+<body>
+    <header>
+        <h1>Manage Your Subscriptions</h1>
+        <a href="/dashboard">
+            <img src="/images/dashboard logo.png" alt="Dashboard Icon" class="dashboard-Icon">
+        </a>
+        <!-- Theme toggle button with moon icon by default -->
+        <button id="theme-toggle">
+            <img id="theme-icon" src="/images/moon.png" alt="Switch to dark mode" />
+        </button>
+    </header>
+    
+    <main>
+        <h2>Update Subscription</h2>
+
+        <div id="update-subscription-form">
+            <div id="update-subscription-form">
+                <form action="/subscriptions/update/<%= subscription.id %>" method="POST">
+                    <label for="name">Subscription Name:</label>
+                    
+                    <!-- Updated input to select dropdown -->
+<select id="name" name="name" required>
+    <option value="" disabled selected>Select Subscription</option>
+    <option value="amazon_prime" <%= (subscription.name === 'amazon_prime') ? 'selected' : '' %>>Amazon Prime</option>
+    <option value="netflix" <%= (subscription.name === 'netflix') ? 'selected' : '' %>>Netflix</option>
+    <option value="disney_plus" <%= (subscription.name === 'disney_plus') ? 'selected' : '' %>>Disney Plus</option>
+    <option value="spotify" <%= (subscription.name === 'spotify') ? 'selected' : '' %>>Spotify</option>
+    <option value="water" <%= (subscription.name === 'water') ? 'selected' : '' %>>Water</option>
+    <option value="electricity" <%= (subscription.name === 'electricity') ? 'selected' : '' %>>Electricity</option>
+    <option value="broadband" <%= (subscription.name === 'broadband') ? 'selected' : '' %>>Broadband</option>
+    <option value="mobile_recharge" <%= (subscription.name === 'mobile_recharge') ? 'selected' : '' %>>Mobile Recharge</option>
+    <option value="gas" <%= (subscription.name === 'gas') ? 'selected' : '' %>>Gas</option>
+</select>
+<!-- Update Subscription Page -->
+<label for="type">Category:</label>
+<select id="type" name="type">
+    <option value="" disabled <%= !subscription.type ? 'selected' : '' %>>Select Category</option>
+    <option value="entertainment" <%= (subscription.type === 'entertainment') ? 'selected' : '' %>>Entertainment</option>
+    <option value="utilities" <%= (subscription.type === 'utilities') ? 'selected' : '' %>>Utilities</option>
+</select>
+
+                <label for="start">Start Date:</label>
+                <input type="date" id="start" name="start" value="<%= subscription.start %>" required>
+
+                <label for="expiry">Expiry Date:</label>
+                <input type="date" id="expiry" name="expiry" value="<%= subscription.expiry %>" required>
+
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" value="<%= subscription.amount %>" required>
+
+                <button type="submit">Update Subscription</button>
+            </form>
+
+            <button class="cancel-btn" onclick="window.location.href='/manage-subscriptions'">Cancel</button>
+        </div>
+    </main>
+
+    <script>
+
+document.getElementById('name').addEventListener('change', function() {
+    const name = this.value;
+    const typeSelect = document.getElementById('type');
+
+    // Log the selected subscription name to check the value
+    console.log('Selected Subscription Name:', name);
+
+    // Set 'Entertainment' as the default for specific subscriptions
+    const entertainmentSubscriptions = [
+        'amazon_prime', 'netflix', 'disney_plus', 'spotify'
+    ];
+
+    // If the selected subscription is one of the entertainment options
+    if (entertainmentSubscriptions.includes(name)) {
+        typeSelect.value = 'Entertainment';  // Set 'Entertainment' automatically
+        console.log('Setting type to Entertainment');
+    } else {
+        typeSelect.value = 'Utilities';  // Set 'Utilities' as default for the rest
+        console.log('Setting type to Utilities');
+    }
+});
+
+
+        // Theme toggle functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        // Set the initial theme to light mode (default with moon icon)
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'light'); // Default to light mode
+        }
+
+        // Apply the stored theme preference
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.src = '/images/sun.png'; // Sun icon for dark mode
+            themeIcon.alt = 'Switch to light mode';
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.src = '/images/moon.png'; // Moon icon for light mode
+            themeIcon.alt = 'Switch to dark mode';
+        }
+
+        // Toggle theme on button click
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.src = '/images/sun.png'; // Sun icon for dark mode
+                themeIcon.alt = 'Switch to light mode';
+                localStorage.setItem('theme', 'dark'); // Save dark mode preference
+            } else {
+                themeIcon.src = '/images/moon.png'; // Moon icon for light mode
+                themeIcon.alt = 'Switch to dark mode';
+                localStorage.setItem('theme', 'light'); // Save light mode preference
+            }
+        });
+    </script>
+    <script src="/js/script.js"></script>
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="username" content="<%= username %>"> <!-- Dynamic Username Meta Tag -->
+    <title>Dashboard - SubSage</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="icon" type="image/png" sizes="256x192" href="/images/website icon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <h1>Your Dashboard, <span id="username"><%= username %></span></h1> <!-- Dynamic Username -->
+        <img src="/images/dashboard logo.png" alt="Dashboard Icon" class="dashboard-Icon">
+        <button id="theme-toggle" aria-label="Toggle Theme">
+            <img id="theme-icon" src="/images/moon.png" alt="Switch to light mode"> <!-- Moon icon for dark mode -->
+        </button>
+    </header>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu">
+        <div class="dropdown">
+            <a href="#">Features</a>
+            <div class="dropdown-content">
+                <a href="/entertainment">Entertainment</a>
+                <a href="/utilities">Utilities</a>
+            </div>
+        </div>
+        <a href="/notifications">Notifications</a>
+        <a href="/addsubscription">Add Subscription</a>
+        <a href="/manage-subscriptions">Manage Subscriptions</a>
+        <div class="dropdown">
+            <a href="/payments">Payment</a>
+            <div class="dropdown-content">
+                <a href="/transaction-history">Transaction History</a>
+            </div>
+        </div>
+        <a href="/contact">Contact & Reviews</a>
+    </nav>
+
+    <!-- Categories Section -->
+    <section class="categories">
+        <div class="card card-1"
+            style="background: url('/images/entertainment-container-bg.jpg') no-repeat center center; 
+              background-size: cover;">
+            <h2>Entertainment</h2>
+            <p>Explore entertainment subscriptions.</p>
+        </div>
+        <div class="card card-2"
+            style="background: url('/images/utility-container-bg.jpeg') no-repeat center center; 
+              background-size: cover;">
+            <h2>Utilities</h2>
+            <p>Manage your utility subscriptions.</p>
+        </div>
+        <div class="card card-3"
+            style="background: url('/images/addsubscription-container-bg.avif') no-repeat center center; 
+              background-size: cover;">
+            <h2>Add Subscription</h2>
+            <p>Add and track your new subscriptions.</p>
+        </div>
+        <div class="card card-4"
+            style="background: url('/images/notifications-container-bg.avif') no-repeat center center; 
+              background-size: cover;">
+            <h2>Notifications</h2>
+            <p>Stay updated with subscription reminders.</p>
+        </div>
+    </section>
+
+
+    <!-- Log Out Button -->
+    <button class="btn-logout" onclick="window.location.href='/logout'">Log Out</button>
+
+    <% if (message) { %>
+        <p style="color: green;"><%= message %></p>
+    <% } %>
+    
+    <h4>Subscription Trends</h4>
+<div class="chart-container">
+    <canvas id="subscriptionsChart"></canvas>
+</div>
+
+
+<h4>Payments Per Month</h4>
+<div class="chart-container">
+    <canvas id="paymentsChart"></canvas>
+</div>
+
+
+    <h3>Total Unique Payers: <%= uniquePayers %></h3>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+    <script>
+        // Ensure subscriptionData is correctly parsed
+        const subscriptionData = JSON.parse('<%- JSON.stringify(subscriptionData || []) %>');
+    
+        // Prepare data for individual subscriptions
+        const subscriptionLabels = [];
+        const datasets = [];
+        const subscriptionNames = [...new Set(subscriptionData.map(item => item.name))];  // Get unique subscription names
+    
+        // Initialize dataset for each subscription
+        subscriptionNames.forEach(name => {
+            datasets.push({
+                label: name,
+                data: [],
+                backgroundColor: generateRandomColor(),
+                borderColor: 'rgba(0, 0, 0, 0.1)',
+                borderWidth: 1
+            });
+        });
+    
+        // Populate datasets and ensure all months appear on the x-axis
+        subscriptionData.forEach(item => {
+            const monthLabel = `Month ${item.month}`;
+            if (!subscriptionLabels.includes(monthLabel)) {
+                subscriptionLabels.push(monthLabel);
+            }
+    
+            const subscriptionIndex = subscriptionNames.indexOf(item.name);
+            const monthIndex = subscriptionLabels.indexOf(monthLabel);
+    
+            // Ensure array length matches the number of months
+            datasets[subscriptionIndex].data[monthIndex] = item.count;
+        });
+    
+        // Fill missing data points with 0
+        datasets.forEach(dataset => {
+            for (let i = 0; i < subscriptionLabels.length; i++) {
+                if (dataset.data[i] === undefined) {
+                    dataset.data[i] = 0;  // Fill missing months with 0
+                }
+            }
+        });
+    
+        // Chart configuration for individual bars
+        new Chart(document.getElementById('subscriptionsChart'), {
+            type: 'bar',
+            data: {
+                labels: subscriptionLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Months'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Subscriptions Count'
+                        }
+                    }
+                }
+            }
+        });
+    
+        // Function to generate random colors for each dataset (subscription)
+        function generateRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+    
+    
+    <script>
+        const paymentData = JSON.parse('<%- JSON.stringify(paymentData || []) %>');
+    
+        // Prepare data for payments
+        const paymentLabels = [];
+        const paymentDatasets = [];
+        const subscriptionNamesForPayments = [...new Set(paymentData.map(item => item.subscription_name))];  // Unique subscription names
+    
+        // Initialize dataset for each subscription
+        subscriptionNamesForPayments.forEach(name => {
+            paymentDatasets.push({
+                label: name,
+                data: [],
+                borderColor: generateRandomColor(),
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.3, // Smooth curves
+                fill: false,
+                pointRadius: 4, // Show data points
+                pointBackgroundColor: 'white',
+                pointBorderColor: generateRandomColor()
+            });
+        });
+    
+        // Populate payment datasets and ensure all months appear on the x-axis
+        paymentData.forEach(item => {
+            const monthLabel = `Month ${item.month}`;
+            if (!paymentLabels.includes(monthLabel)) {
+                paymentLabels.push(monthLabel);
+            }
+    
+            const subscriptionIndex = subscriptionNamesForPayments.indexOf(item.subscription_name);
+            const monthIndex = paymentLabels.indexOf(monthLabel);
+    
+            // Ensure array length matches the number of months
+            paymentDatasets[subscriptionIndex].data[monthIndex] = item.amount;
+        });
+    
+        // Fill missing data points with 0
+        paymentDatasets.forEach(dataset => {
+            for (let i = 0; i < paymentLabels.length; i++) {
+                if (dataset.data[i] === undefined) {
+                    dataset.data[i] = 0;  // Fill missing months with 0
+                }
+            }
+        });
+    
+        // Chart configuration for multiple line chart
+        new Chart(document.getElementById('paymentsChart'), {
+            type: 'line',
+            data: {
+                labels: paymentLabels,
+                datasets: paymentDatasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Months'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Payments (₹)'
+                        }
+                    }
+                }
+            }
+        });
+    
+        // Function to generate random colors for each dataset (subscription)
+        function generateRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+    
+
+    
+    
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get the username from the custom header (X-Username)
+            const username = document.querySelector('meta[name="username"]')?.content;
+            if (username) {
+                document.getElementById('username').textContent = username;
+            }
+        });
+        // Theme toggle functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        // Set the initial theme to light mode (default with sun icon)
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'light'); // Default to light mode
+        }
+
+        // Apply the stored theme preference
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+            themeIcon.alt = 'Switch to light mode';
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+            themeIcon.alt = 'Switch to dark mode';
+        }
+
+        // Toggle theme on button click
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+                themeIcon.alt = 'Switch to light mode';
+                localStorage.setItem('theme', 'dark'); // Save dark mode preference
+            } else {
+                themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+                themeIcon.alt = 'Switch to dark mode';
+                localStorage.setItem('theme', 'light'); // Save light mode preference
+            }
+        });
+
+        // Scroll-based animation for cards
+        const cards = document.querySelectorAll(".card");
+        const observerOptions = {
+            root: null, // Viewport is the root
+            threshold: 0.1, // Trigger when 10% of the element is visible
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                    observer.unobserve(entry.target); // Stop observing once it's visible
+                }
+            });
+        }, observerOptions);
+
+        cards.forEach(card => observer.observe(card));
+    </script>
+</body>
+</html>

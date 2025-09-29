@@ -1,0 +1,338 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Variables for Light and Dark Modes */
+:root {
+    --bg-color: #f4f4f9;
+    --text-color: #fffffff3;
+    --primary-color: #007bff;
+    --secondary-color: #0056b3;
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: transparent;
+    --card-shadow: rgba(0, 0, 0, 0.2);
+    --header-bg: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode {
+    --bg-color: #121212;
+    --text-color: #333;
+    --card-bg: transparent;
+    --card-shadow: rgba(255, 255, 255, 0.1);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --button-bg: linear-gradient(45deg, #4a90e2, #357abd);
+    --button-hover-bg: linear-gradient(45deg, #357abd, #4a90e2);
+}
+
+/* Light Mode Background */
+body {
+    font-family: 'Arial', sans-serif;
+    background-image: url('/images/home-dashboard-bg.jpg'); /* Light mode background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+
+/* Dark Mode Background */
+body.dark-mode {
+    font-family: 'Arial', sans-serif;
+    background-image: url('/images/home.jpg');/* Dark mode background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+
+
+/* Logo Section */
+.logo-container {
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.logo-container img {
+    width: 200px;
+    height: auto;
+    margin-top: 27px;
+   
+filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3)); /* Subtle shadow for light mode */
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.logo-container img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced hover effect for dark mode */
+}
+
+/* Dark Mode Logo Styles */
+body.dark-mode .logo-container img {
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.74)); /* Adjust shadow for dark mode */
+}
+body.dark-mode .logo-container img:hover {
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.664));
+}
+/* Header Section */
+header {
+    text-align: center;
+    padding: 20px;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 30px;
+    background: transparent;
+    border-radius: 15px;
+    box-shadow: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.container h1 {
+    font-size: 50px;
+    margin-top: -7%; /* Reset top margin */
+}
+
+.container h2 {
+    font-size: 50px;
+    margin-top: 7%;
+    color: #ccc;
+    margin-bottom: 10px; /* Add some space below h2 */
+}
+/* Default H2 Styles (Light Mode) */
+.container h2 {
+    font-size: 50px;
+    margin-top: 7%;
+    color: #f7f7f7; /* Use the text color variable for consistency */
+    margin-bottom: 10px; /* Add some space below h2 */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for light mode */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Dark Mode H2 Styles */
+body.dark-mode .container h2 {
+    color: rgba(0, 0, 0, 0.801); /* Use dark mode text color */
+    text-shadow: 2px 2px 6px rgba(20, 20, 20, 0.2); /* Adjust shadow for better readability */
+}
+
+
+.container h1 span {
+    color: #007bff;
+}
+
+.container p {
+    font-size: 29px;
+    margin: 10px 0;
+}
+
+/* Buttons */
+.btn,
+button {
+    display: inline-block;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 25px;
+    color: #fff;
+    cursor: pointer;
+    background: var(--button-bg);
+    box-shadow: rgba(0, 0, 0, 0.788);
+    transition: all 0.3s ease-in-out;
+}
+
+.btn:hover,
+button:hover {
+    background: var(--button-hover-bg);
+    transform: scale(1.05);
+    box-shadow: rgba(0, 0, 0, 0.76);
+}
+
+.button-container {
+    position: fixed;
+    top: 20px;
+    right: 70px; /* Leave space for the theme toggle button */
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.button-containert .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 20px;
+    background: var(--button-bg);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease-in-out;
+}
+
+.button-container .btn:hover {
+    background: var(--button-hover-bg);
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+/* Theme Toggle Button */
+#theme-toggle {
+    position: fixed;
+    top: 25px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+#theme-toggle img {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+
+/* Cards (e.g., for subscriptions) */
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.subscription-card {
+    background: transparent;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.subscription-card:hover {
+    transform: translateY(-10px);
+    box-shadow: none;
+}
+
+.subscription-card img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.subscription-card:hover img {
+    transform: rotate(360deg);
+}
+
+/* Forms */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+form input,
+form button {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+form button {
+    background: var(--button-bg);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+form button:hover {
+    background: var(--button-hover-bg);
+}
+
+/* Footer */
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none; /* Removes the background color */
+    color: var(--text-color);
+    border-radius: 0; /* Removes the rounded corners */
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem;
+    }
+
+    .btn,
+    button {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+
+    .logo-container img {
+        width: 150px; /* Adjust logo size for smaller screens */
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .container h1 {
+        font-size: 30px; /* Reduce h1 font size */
+    }
+
+    .container h2 {
+        font-size: 40px; /* Reduce h2 font size */
+    }
+
+    .container p {
+        font-size: 18px; /* Adjust font size for readability */
+    }
+
+    .subscription-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .button-container {
+        position: relative;
+        top: 0;
+        right: 0;
+        gap: 10px;
+    }
+}

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utility Services</title>
+    <link rel="icon" type="image/png" href="website_icon.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+    <style>
+     /* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Variables for Light and Dark Modes */
+body.dark-mode {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --primary-color: #007bff;
+    --secondary-color: #0056b3;
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.747);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+}
+
+:root {
+    --bg-color: #121212;
+    --text-color: #fff;
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(0, 0, 0, 0.712);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --button-bg: linear-gradient(45deg, #4a90e2, #357abd);
+    --button-hover-bg: linear-gradient(45deg, #357abd, #4a90e2);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+}
+
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    background-image: url('/images/features-bg.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+body.dark-mode {
+    background-image: url('/images/features.jpg'); /* Image for dark mode */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    font-size: 25px;
+    color: var(--text-color);
+    margin: 20px 0;
+}
+
+/* Logo Image Styles */
+header img {
+    width: 60px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    position: absolute;
+    top: 30px; /* Adjust spacing from the top */
+    left: 20px; /* Adjust spacing from the left */
+}
+
+/* Hover Effect for Header Logo */
+header img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)); /* Enhanced shadow on hover */
+}
+
+/* Dark Mode Header Logo Styles */
+body.dark-mode header img {
+    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3)); /* Adjust shadow for dark mode */
+}
+
+/* Dark Mode Hover Effect for Header Logo */
+body.dark-mode header img:hover {
+    filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced shadow on hover in dark mode */
+}
+/* Service Box Styles */
+.service-box {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 50px;
+}
+
+.service-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px var(--card-shadow);
+    width: 250px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+}
+
+.service-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.service-card img {
+    width: 100px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.service-card h2 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.service-card p {
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+/* Light and dark mode colors */
+:root {
+    --button-bg-color: #1f6feb;  /* Dark mode background */
+    --button-hover-bg-color: #1450a3;
+    --button-text-color: #ffffff;
+}
+
+[data-theme="dark"] {
+    --button-bg-color: #007bff;  /* Light mode background */
+    --button-hover-bg-color: #0056b3;
+    --button-text-color: #ffffff;
+}
+
+/* Button base styles */
+.btn {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0; /* Initially invisible */
+    visibility: hidden; /* Initially hidden */
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease; /* Add transition for background color */
+    position: relative; /* For visibility trigger */
+}
+
+/* Show button when the cursor is near */
+.service-card:hover .btn,
+.service-card:focus-within .btn {
+    opacity: 1; /* Fully visible */
+    visibility: visible; /* Make it appear */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Hover effect on the button */
+.btn:hover {
+    background-color: var(--button-hover-bg-color);
+    transform: scale(1.1); /* Additional zoom on hover */
+}
+
+/* Active effect */
+.btn:active {
+    transform: scale(0.95); /* Slight shrink on click */
+}
+
+/* Specific margin-top for each button */
+.service-card:nth-child(1) .btn { /* First button (Amazon Prime) */
+    margin-top: 50px;
+}
+
+.service-card:nth-child(2) .btn { /* Second button (Netflix) */
+    margin-top: 25px;
+}
+
+.service-card:nth-child(3) .btn { /* Third button (Disney+) */
+    margin-top: 25px;
+}
+
+.service-card:nth-child(4) .btn { /* Fourth button (Spotify) */
+    margin-top: 50px;
+}
+
+.service-card:nth-child(5) .btn { /* Fourth button (Spotify) */
+    margin-top: 50px;
+}
+/* Default color for light mode */
+.service-card h2 {
+    color:#0056b3; /* Light blue color for light mode */
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+    .service-card h2 {
+        color: #007bff;  /* Dark blue color for dark mode */
+    }
+}
+
+
+/* Theme Toggle Button */
+#theme-toggle {
+    position: fixed;
+    top: 40px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+}
+
+#theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+
+/* Footer */
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none; /* Removes the background color */
+    color: var(--text-color);
+    border-radius: 0; /* Removes the rounded corners */
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1>Utility Services</h1>
+        <a href="/dashboard">
+            <img src="images/utilities-icon.png" alt="Entertainment Logo">
+        </a>        
+    </header>
+<!-- Service Boxes -->
+<div class="service-box">
+    <!-- Water -->
+    <div class="service-card">
+        <img src="images/water.jpg" alt="Water Service">
+        <h2>Water</h2>
+        <p>Get fresh water supply for all your needs, delivered directly to your home.</p>
+        <button class="btn" onclick="redirectToAddSubscription('water')">Add Subscription</button>
+    </div>
+
+    <!-- Electricity -->
+    <div class="service-card">
+        <img src="images/electricity.jpg" alt="Electricity Service">
+        <h2>Electricity</h2>
+        <p>Ensure continuous power supply for your home or business with our electricity services.</p>
+        <button class="btn" onclick="redirectToAddSubscription('electricity')">Add Subscription</button>
+    </div>
+
+    <!-- Broadband -->
+    <div class="service-card">
+        <img src="images/broadband.jpg" alt="Broadband Service">
+        <h2>Broadband</h2>
+        <p>Stay connected with high-speed internet for work and play with our broadband packages.</p>
+        <button class="btn" onclick="redirectToAddSubscription('broadband')">Add Subscription</button>
+    </div>
+
+    <!-- Mobile Recharge -->
+    <div class="service-card">
+        <img src="images/mobile-recharge.jpg" alt="Mobile Recharge Service">
+        <h2>Mobile Recharge</h2>
+        <p>Recharge your mobile phone with prepaid and postpaid plans at your convenience.</p>
+        <button class="btn" onclick="redirectToAddSubscription('mobile_recharge')">Add Subscription</button>
+    </div>
+
+    <!-- Gas -->
+    <div class="service-card">
+        <img src="images/gas-img.jpg" alt="Gas Service">
+        <h2>Gas</h2>
+        <p>Reliable gas supply for your kitchen needs and other household requirements.</p>
+        <button class="btn" onclick="redirectToAddSubscription('gas')">Add Subscription</button>
+    </div>
+</div>
+
+<script>
+    // Redirect to add subscription form with prefilled name and type (utilities page)
+    function redirectToAddSubscription(subscriptionName, Type) {
+        const typeValue = Type || 'utilities'; // Default to 'utilities' if Type is undefined or null
+        window.location.href = `/addsubscription?name=${encodeURIComponent(subscriptionName)}&type=${encodeURIComponent(typeValue)}`;
+    }
+    </script>
+    
+    
+
+
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle">
+        <img id="theme-icon" src="images/moon.png" alt="Switch to dark mode">
+    </button>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+
+    <script>
+// Theme toggle functionality
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const body = document.body;
+
+// Set the initial theme to light mode (default with moon icon)
+if (!localStorage.getItem('theme')) {
+    localStorage.setItem('theme', 'light'); // Default to light mode
+}
+
+// Apply the stored theme preference
+if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+    themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+    themeIcon.alt = 'Switch to light mode';
+} else {
+    body.classList.remove('dark-mode');
+    themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+    themeIcon.alt = 'Switch to dark mode';
+}
+
+// Toggle theme on button click
+themeToggleBtn.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    if (body.classList.contains('dark-mode')) {
+        themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+        themeIcon.alt = 'Switch to light mode';
+        localStorage.setItem('theme', 'dark'); // Save dark mode preference
+    } else {
+        themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+        themeIcon.alt = 'Switch to dark mode';
+        localStorage.setItem('theme', 'light'); // Save light mode preference
+    }
+});
+
+
+    </script>
+
+</body>
+</html>

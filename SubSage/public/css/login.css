@@ -1,0 +1,433 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Variables for Light and Dark Modes */
+:root {
+    --bg-color: #121212;
+    --text-color: #fff;
+    --primary-color: #0056b3; /* Dark blue */
+    --secondary-color: #007bff; /* Light blue */
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(0, 0, 0, 0.788);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+}
+
+body.dark-mode {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --primary-color: #007bff; /* Light blue */
+    --secondary-color: #0056b3; /* Dark blue */
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.747);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    font-size: 25px;
+    margin: 20px 0; /* Add top and bottom margin */
+    color: var(--text-color); /* Use root variable for color */
+    transition: color 0.3s ease-in-out; /* Smooth color transition */
+}
+
+body.dark-mode header {
+    color: var(--text-color); /* Use dark mode text color */
+}
+
+/* Dark Mode Header Specific Adjustments */
+body.dark-mode header h1 {
+    color: var(--text-color); /* Consistent dark mode text */
+    text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.1); /* Subtle shadow for dark mode */
+}
+
+/* Additional Relevant Updates */
+body:not(.dark-mode) header h1 {
+    color: var(--text-color); /* Default light mode text color */
+}
+
+/* Link Styles */
+form a {
+    color: var(--primary-color); /* Light blue in light mode */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease-in-out;
+}
+
+body.dark-mode form a {
+    color: var(--secondary-color); /* Dark blue in dark mode */
+}
+
+form a:hover {
+    text-decoration: underline;
+}
+
+/* Button Styles */
+form .btn {
+    background: var(--primary-color); /* Default to primary color */
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 25px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Sign Up Button Specific Styles */
+form .btn.signup {
+    background: var(--secondary-color); /* Light blue in dark mode, dark blue in light mode */
+}
+
+body.dark-mode form .btn.signup {
+    background: var(--primary-color); /* Adjust for dark mode */
+}
+
+form .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Log In Button Specific Styles */
+form .btn.login {
+    background: var(--primary-color); /* Default */
+}
+
+body.dark-mode form .btn.login {
+    background: var(--secondary-color); /* Adjust for dark mode */
+}
+
+/* General Styles */
+/* Light Mode Background */
+body {
+    font-family: 'Arial', sans-serif;
+    background-image: url('/images/login-bg.png'); /* Light mode background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+
+/* Dark Mode Background */
+body.dark-mode {
+    font-family: 'Arial', sans-serif;
+    background-image: url('/images/login.jpg');/* Dark mode background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    overflow-y: hidden;
+    padding-bottom: 100px;
+}
+
+/* Centered Signup Container */
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px; /* Ensures padding on smaller screens */
+}
+.g-recaptcha {
+    margin-top: 10px;
+    display: inline-block;
+    transform: scale(1.1);  /* Optional: adjust reCAPTCHA size */
+}
+#error-message {
+    color: red;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+/* Header Styles */
+header {
+    text-align: center;
+    font-size: 25px;
+    color: #333;
+    margin: 20px 0; /* Add top and bottom margin */
+}
+/* Header Logo Styles */
+header img {
+    width: 60px; /* Adjust size as needed */
+    height: auto;
+    position: absolute;
+    top: 30px; /* Adjust spacing from the top */
+    left: 20px; /* Adjust spacing from the left */
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3)); /* Subtle shadow for light mode */
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+/* Hover Effect for Header Logo */
+header img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5)); /* Enhanced shadow on hover */
+}
+
+/* Dark Mode Header Logo Styles */
+body.dark-mode header img {
+    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3)); /* Adjust shadow for dark mode */
+}
+
+/* Dark Mode Hover Effect for Header Logo */
+body.dark-mode header img:hover {
+    filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced shadow on hover in dark mode */
+}
+/* Dark Mode Adjustments */
+body.dark-mode header h1 {
+    color: var(--text-color); /* Use dark mode text color */
+    text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.1); /* Adjust shadow for dark mode */
+}
+
+/* Logo Image Styles */
+header img {
+    width: 50px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    position: absolute;
+    top: 37px; /* Adjust spacing from the top */
+    left: 20px; /* Adjust spacing from the left */
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth hover effect */
+}
+
+header img:hover {
+    transform: scale(1.1); /* Slightly enlarge the image */
+    opacity: 0.8; /* Slightly reduce opacity */
+}
+/* Account Creation Form */
+form {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px var(--card-shadow);
+    width: 100%;
+    max-width: 400px; /* Reduced size for better alignment */
+    transition: all 0.3s ease-in-out;
+    box-sizing: border-box;
+    text-align: center; /* Center content inside the form */
+    margin-top: -170px;
+}
+
+form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+/* Form Fields */
+form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    border: 1px solid var(--form-input-border);
+    background: var(--form-input-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    transition: all 0.3s ease-in-out;
+}
+
+form input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Submit Button */
+form button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 25px;
+    color: #fff;
+    cursor: pointer;
+    background: var(--button-bg);
+    transition: all 0.3s ease-in-out;
+    margin-top: 10px;
+}
+
+form button:hover {
+    background: var(--button-hover-bg);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Additional Styles for Create new account and Sign in */
+p {
+    margin-top: 20px;
+    font-size: 1rem;
+    color: var(--text-color);
+    transition: all 0.3s ease-in-out;
+}
+
+p a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+}
+
+p a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+/* Footer Text */
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none; /* Removes the background color */
+    color: var(--text-color);
+    border-radius: 0; /* Removes the rounded corners */
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+/* Button Styles */
+button {
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #007bff;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* Theme Icon Styles */
+#theme-toggle {
+    position: fixed;
+    top: 3px;
+    right: 40px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+#theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    header {
+        font-size: 22px;
+    }
+
+    form {
+        max-width: 100%;
+        margin-top: 0;
+        padding: 20px;
+    }
+
+    form h2 {
+        font-size: 1.2rem;
+    }
+
+    form input {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    form button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    footer {
+        font-size: 16px;
+    }
+
+    header img {
+        width: 50px;
+        top: 20px;
+        left: 10px;
+    }
+
+    #theme-toggle {
+        right: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        font-size: 20px;
+    }
+
+    form h2 {
+        font-size: 1rem;
+    }
+
+    form input {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    form button {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    footer {
+        font-size: 14px;
+    }
+
+    header img {
+        width: 40px;
+        top: 15px;
+        left: 5px;
+    }
+
+    #theme-toggle {
+        right: 15px;
+    }
+}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Subscription - SubSage</title>
+    <link rel="stylesheet" href="/css/addsubscription.css">
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+</head>
+<body>
+    <header>
+        <h1>Add Subscription</h1>
+        <a href="/dashboard">
+            <img src="/images/dashboard logo.png" alt="Dashboard Icon" class="dashboard-Icon">
+        </a>
+        <button id="theme-toggle" aria-label="Toggle Theme">
+            <img id="theme-icon" src="/images/moon.png" alt="Toggle Theme">
+        </button>
+    </header>
+    
+    <main class="container">
+        <form id="subscription-form">
+            <input type="hidden" id="user-id" value="<%= user.id %>">
+            
+            <label for="name">Subscription Name</label>
+            <select id="name" name="name" required>
+                <option value="" disabled selected>Select Subscriptions</option>
+                <option value="amazon_prime" <% if (name === 'amazon_prime') { %> selected <% } %>>Amazon Prime</option>
+                <option value="netflix" <% if (name === 'netflix') { %> selected <% } %>>Netflix</option>
+                <option value="disney_plus" <% if (name === 'disney_plus') { %> selected <% } %>>Disney Plus</option>
+                <option value="spotify" <% if (name === 'spotify') { %> selected <% } %>>Spotify</option>
+                <option value="water" <% if (name === 'water') { %> selected <% } %>>Water</option>
+                <option value="electricity" <% if (name === 'electricity') { %> selected <% } %>>Electricity</option>
+                <option value="broadband" <% if (name === 'broadband') { %> selected <% } %>>Broadband</option>
+                <option value="mobile_recharge" <% if (name === 'mobile_recharge') { %> selected <% } %>>Mobile Recharge</option>
+                <option value="gas" <% if (name === 'gas') { %> selected <% } %>>Gas</option>
+            </select>
+
+            <label for="type">Type</label>
+            <select id="type" name="type" required>
+                <option value="" disabled selected>Select Type</option>
+                <option value="entertainment" <% if (type === 'entertainment') { %> selected <% } %>>Entertainment</option>
+                <option value="utilities" <% if (type === 'utilities') { %> selected <% } %>>Utilities</option>
+            </select>
+            
+            <label for="start">Start Date</label>
+            <input type="date" id="start" name="start" required>
+
+            <label for="expiry">Expiry Date</label>
+            <input type="date" id="expiry" name="expiry" required>
+
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" name="amount" required placeholder="Enter amount" step="0.01">
+            
+            <button type="submit" id="submit-button" class="btn">Add Subscription</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+
+    <script src="/routes/subscription.js"></script>
+    <script>
+      document.getElementById('subscription-form').addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent the default form submission
+
+        // Collect form data
+        const name = document.getElementById('name').value;
+        const type = document.getElementById('type').value;
+        const start = document.getElementById('start').value;
+        const expiry = document.getElementById('expiry').value;
+        const amount = document.getElementById('amount').value;
+
+        // Ensure the current user ID is available in the session or a hidden field
+        const userId = document.getElementById('user-id').value; // Hidden input field or retrieved from session
+
+        // Validate required fields
+        if (!userId || !name || !type || !start || !expiry || !amount || isNaN(amount)) {
+            alert('Please fill out all fields correctly.');
+            return;
+        }
+
+        // Prepare the subscription data object
+        const subscriptionData = {
+            user_id: userId,
+            name,
+            type,
+            start,
+            expiry,
+            amount: parseFloat(amount).toFixed(2), // Ensure a valid decimal format
+        };
+
+        // Submit button feedback
+        const submitButton = document.querySelector('#submit-button');
+        if (!submitButton) {
+            console.error("Submit button not found");
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        // Send data to the server using fetch
+        fetch('/subscriptions/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(subscriptionData),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit';
+            if (data.success) {
+                alert('Subscription added successfully!');
+                document.getElementById('subscription-form').reset(); // Clear the form
+            } else {
+                alert('Error adding subscription: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch((error) => {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit';
+            console.error('Error:', error);
+            alert('Error adding subscription');
+        });
+    });
+
+    // Theme toggle functionality
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const body = document.body;
+
+    // Set the initial theme to light mode (default with moon icon)
+    if (!localStorage.getItem('theme')) {
+        localStorage.setItem('theme', 'light'); // Default to light mode
+    }
+
+    // Apply the stored theme preference
+    if (localStorage.getItem('theme') === 'dark') {
+        body.classList.add('dark-mode');
+        themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+        themeIcon.alt = 'Switch to light mode';
+    } else {
+        body.classList.remove('dark-mode');
+        themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+        themeIcon.alt = 'Switch to dark mode';
+    }
+
+    // Toggle theme on button click
+    themeToggleBtn.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        if (body.classList.contains('dark-mode')) {
+            themeIcon.src = '/images/sun.png'; // Sun icon for dark mode (now sun for dark)
+            themeIcon.alt = 'Switch to light mode';
+            localStorage.setItem('theme', 'dark'); // Save dark mode preference
+        } else {
+            themeIcon.src = '/images/moon.png'; // Moon icon for light mode (now moon for light)
+            themeIcon.alt = 'Switch to dark mode';
+            localStorage.setItem('theme', 'light'); // Save light mode preference
+        }
+    });
+
+    window.addEventListener('scroll', function() {
+        const body = document.body;
+        
+        // If the page is scrolled down, add the class "scrolled"
+        if (window.scrollY > 100) { // Adjust the number based on when you want the footer to appear
+            body.classList.add('scrolled');
+        } else {
+            body.classList.remove('scrolled');
+        }
+    });
+
+    document.getElementById('name').addEventListener('change', function() {
+        const name = this.value;
+        const typeSelect = document.getElementById('type');
+    
+        // Log the selected subscription name to check the value
+        console.log('Selected Subscription Name:', name);
+    
+        // Set 'Entertainment' as the default for specific subscriptions
+        const entertainmentSubscriptions = [
+            'amazon_prime', 'netflix', 'disney_plus', 'spotify'
+        ];
+    
+        // If the selected subscription is one of the entertainment options
+        if (entertainmentSubscriptions.includes(name)) {
+            typeSelect.value = 'entertainment';  // Set 'Entertainment' automatically
+            console.log('Setting type to Entertainment');
+        } else {
+            typeSelect.value = 'utilities';  // Set 'Utilities' as default for the rest
+            console.log('Setting type to Utilities');
+        }
+    });
+    
+    </script>
+</body>
+</html>

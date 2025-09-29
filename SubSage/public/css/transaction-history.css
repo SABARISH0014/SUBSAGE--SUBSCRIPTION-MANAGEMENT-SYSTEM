@@ -1,0 +1,245 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/* Root Variables for Light and Dark Modes */
+body.dark-mode {
+    --bg-color: #f4f4f9;
+    --text-color: #5c5555;
+    --primary-color: #007bff;
+    --secondary-color: #0056b3;
+    --button-bg: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    --button-hover-bg: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.692);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+    --table-header-bg: #000000;
+    --table-row-bg: #f9f9f9;
+    --table-row-hover-bg: #f1f1f1;
+}
+
+:root {
+    --bg-color: #121212;
+    --text-color: #fff;
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(2, 2, 2, 0.692);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --button-bg: linear-gradient(45deg, #4a90e2, #357abd);
+    --button-hover-bg: linear-gradient(45deg, #357abd, #4a90e2);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+    --table-header-bg: #2a2a2a;
+    --table-row-bg: #1f1f1f;
+    --table-row-hover-bg: #333;
+}
+
+/* Base Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-image: url('/images/transaction-hsitory-dark.jpg'); /* Add background image */
+    color: var(--text-color);
+    text-align: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    margin: 0;
+    padding: 0;
+}
+/* Dark Mode Styles */
+body.dark-mode {
+    background-image: url('/images/transaction-history.jpg'); /* Image for dark mode */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+/* Page Title */
+h1 {
+    margin-top: 35px;
+    margin-bottom: 70px;
+    color: var(--text-color);
+    font-size: 35px;
+    letter-spacing: 1px;
+}
+
+/* Dashboard Icon */
+.dashboard-icon {
+    width: 60px;
+    height: auto;
+    position: absolute;
+    top: 25px;
+    left: 20px;
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3)); /* Light mode shadow */
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.dashboard-icon:hover {
+    transform: scale(1.1);
+}
+
+table {
+    width: 90%;  /* Reduce width to add side gaps */
+    margin: 30px auto 50px auto; /* Center the table and add bottom space */
+    border-collapse: collapse;
+    background: var(--card-bg);
+    box-shadow: 0 4px 8px var(--card-shadow);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+
+th {
+    padding: 14px;
+    font-size: 25px;
+}
+td {
+    padding: 14px;
+    font-size: 20px;
+}
+th {
+    background-color: var(--table-header-bg);
+    color: var(--text-color);
+    text-transform: uppercase;
+}
+
+tr:nth-child(even) {
+    background-color: var(--table-row-bg);
+}
+
+tr:hover {
+    background-color: var(--table-row-hover-bg);
+    transition: background 0.3s ease-in-out;
+}
+button {
+    background-color: #007bff; /* Primary blue color */
+    color: white; /* Text color */
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+button:active {
+    background-color: #004494; /* Even darker on click */
+    transform: scale(0.98);
+}
+
+
+/* Back Button */
+.back-link {
+    display: inline-block;
+    margin-top: 40px;
+    padding: 12px 24px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.back-link:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+/* Theme Icon Styles */
+#theme-toggle {
+    position: absolute;
+    top: 35px;
+    right: 40px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+#theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none; /* Removes the background color */
+    color: var(--text-color);
+    border-radius: 0; /* Removes the rounded corners */
+    position: absolute;
+    width: 100%;
+    margin-top: 480px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 24px;
+    }
+
+    .dashboard-icon {
+        width: 35px;
+        top: 15px;
+        left: 15px;
+    }
+
+    table {
+        width: 95%;
+        margin: 20px auto;
+    }
+
+    th, td {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .back-link {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    .dashboard-icon {
+        width: 30px;
+        top: 10px;
+        left: 10px;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    th, td {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .back-link {
+        font-size: 12px;
+        padding: 8px 16px;
+    }
+}

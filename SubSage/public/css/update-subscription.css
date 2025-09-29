@@ -1,0 +1,308 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Styles for Light Mode */
+body.dark-mode {
+    --bg-color: #f4f4f9; /* Light background */
+    --text-color: #333;   /* Dark text (light mode) */
+    --primary-color: #007bff; /* Light blue */
+    --secondary-color: #0056b3; /* Dark blue */
+    --button-bg: linear-gradient(45deg, #0056b3, #007bff);
+    --button-hover-bg: linear-gradient(45deg, #007bff, #0056b3);
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.801);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+}
+
+/* Default h1 color for Light Mode */
+h1 {
+    color: #fff; /* Light Mode: Dark color */
+}
+
+/* Dark Mode Styles */
+:root {
+    --bg-color: #121212; /* Dark background */
+    --text-color: #ffffff;   /* Light text (dark mode) */
+    --primary-color: #0056b3; /* Dark blue */
+    --secondary-color: #007bff; /* Light blue */
+    --button-bg: linear-gradient(45deg, #0056b3, #007bff);
+    --button-hover-bg: linear-gradient(45deg, #007bff, #0056b3);
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(0, 0, 0, 0.822);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+}
+
+/* h1 color for Dark Mode */
+body.dark-mode h1 {
+    color: #333; /* Dark Mode: Light text (white) */
+}
+
+/* General Styles */
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+    background-image: url('/images/Subscriptions-bg.jpg'); /* Add background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+/* Dark Mode Styles */
+body.dark-mode {
+    background-image: url('/images/subscription.jpg'); /* Image for dark mode */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+/* Centering and Styling for h2 Text */
+h2 {
+    text-align: center;
+    font-size: 30px;
+    margin: 40px 0;
+    color: var(--text-color);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.4;
+}
+
+/* Update Subscription Form */
+#update-subscription-form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 8px 16px var(--card-shadow);
+    margin-top: 40px;
+}
+
+#update-subscription-form label {
+    font-size: 20px;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    display: block;
+}
+
+#update-subscription-form input,
+#update-subscription-form select {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    background: var(--form-input-bg);
+    border: 1px solid var(--form-input-border);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+#update-subscription-form input[type="date"] {
+    cursor: pointer;
+}
+
+/* Submit Button */
+button[type="submit"] {
+    background: var(--primary-color); /* Default to primary color */
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+    margin-top: 10px;
+}
+
+/* Hover Effect */
+button[type="submit"]:hover {
+    background: var(--secondary-color); /* Change to secondary color on hover */
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Adjust colors for dark mode */
+body.dark-mode button[type="submit"] {
+    background: var(--primary-color); /* Dark blue in dark mode */
+}
+
+body.dark-mode button[type="submit"]:hover {
+    background: var(--secondary-color); /* Light blue on hover in dark mode */
+}
+
+.cancel-btn {
+    background: #999;
+    color: #fffdfd;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+    margin-top: 20px;
+}
+
+.cancel-btn:hover {
+    background: #ccc;
+    transform: scale(1.05);
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    font-size: 25px;
+    color: var(--text-color);
+    margin: 20px 0;
+}
+
+/* Header Logo Styles */
+header img {
+    width: 60px;
+    height: auto;
+    position: absolute;
+    top: 30px;
+    left: 20px;
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+/* Hover Effect for Header Logo */
+header img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* Dark Mode Header Logo Styles */
+body.dark-mode header img {
+    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3));
+}
+
+/* Dark Mode Hover Effect for Header Logo */
+body.dark-mode header img:hover {
+    filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5));
+}
+
+/* Theme Toggle Styles */
+#theme-toggle {
+    position: absolute;
+    top: 13px;
+    right: 40px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+#theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+#theme-toggle img:hover {
+    transform: scale(1.2);
+}
+
+footer {
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    background: none;
+    color: var(--text-color);
+    border-radius: 0;
+    position: absolute;
+    width: 100%;
+    bottom: -400px;
+
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    /* Update subscription form adjustments */
+    #update-subscription-form {
+        padding: 15px;
+        width: 90%; /* Adjust form width */
+    }
+
+    /* Make buttons take full width on smaller screens */
+    button[type="submit"], .cancel-btn {
+        width: 100%; /* Ensure buttons are full-width */
+    }
+
+    /* Header styles for mobile */
+    header {
+        font-size: 22px; /* Smaller font size for mobile */
+        margin: 15px 0;
+    }
+
+    /* Logo size for header */
+    header img {
+        width: 50px; /* Adjust logo size for mobile */
+        top: 20px;
+    }
+
+    /* Theme toggle adjustments for smaller screens */
+    #theme-toggle {
+        top: 10px;
+        right: 15px;
+        width: 35px;
+        height: 35px; /* Smaller toggle button */
+    }
+
+    /* Adjust h1 font size for smaller screens */
+    h1 {
+        font-size: 24px; /* Smaller font size for header */
+    }
+
+    /* Adjust h2 font size for smaller screens */
+    h2 {
+        font-size: 26px; /* Smaller header text */
+    }
+
+    /* Footer adjustments */
+    footer {
+        font-size: 16px; /* Smaller footer font size */
+        padding: 15px; /* Reduce padding */
+        bottom: 0;
+    }
+}
+
+/* Media Query for Very Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    /* Further reduce font sizes */
+    h2 {
+        font-size: 20px; /* Even smaller h2 text */
+    }
+
+    header {
+        font-size: 20px; /* Smaller header text */
+    }
+
+    button[type="submit"], .cancel-btn {
+        padding: 12px 18px; /* Adjust padding */
+        font-size: 14px; /* Smaller button text */
+    }
+
+    footer {
+        font-size: 14px; /* Smaller footer text */
+        padding: 10px; /* Further reduce padding */
+    }
+}

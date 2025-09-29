@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details</title>
+    <link rel="stylesheet" href="/css/transaction-details.css">
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
+</head>
+</head>
+<body>
+    <h1>Transaction Details</h1>
+    <button id="theme-toggle">
+        <img id="theme-icon" src="/images/moon.png" alt="Switch to dark mode" />
+    </button>
+    <table>
+        <tr><th>Transaction ID</th><td><%= transaction.payment_id %></td></tr>
+        <tr><th>Payer Name</th><td><%= transaction.payer_name %></td></tr>
+        <tr><th>Payer Email</th><td><%= transaction.payer_email %></td></tr>
+        <tr><th>Subscription</th><td><%= transaction.subscription_name %></td></tr>
+        <tr><th>Amount</th><td>₹<%= transaction.amount %></td></tr>
+        <tr><th>Currency</th><td><%= transaction.currency.toUpperCase() %></td></tr>
+        <tr><th>Payment Method</th><td><%= transaction.payment_method || 'N/A' %></td></tr>
+        <tr><th>Payment Type</th><td><%= transaction.payment_type || 'N/A' %></td></tr>
+        <tr><th>Status</th><td><%= transaction.status %></td></tr>
+        <tr><th>Date</th><td><%= new Date(transaction.created_at).toLocaleString() %></td></tr>
+    </table>
+
+    <button onclick="window.close()">Close</button>
+    <footer>
+        <p>&copy; 2025 SubSage. All rights reserved.</p>
+    </footer>
+    <script>
+        // Theme toggle functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+    
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'dark');
+        }
+    
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.src = '/images/sun.png';
+            themeIcon.alt = 'Switch to light mode';
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.src = '/images/moon.png';
+            themeIcon.alt = 'Switch to dark mode';
+        }
+    
+        themeToggleBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                themeIcon.src = '/images/moon.png';
+                themeIcon.alt = 'Switch to dark mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                themeIcon.src = '/images/sun.png';
+                themeIcon.alt = 'Switch to light mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
+</body>
+</html>

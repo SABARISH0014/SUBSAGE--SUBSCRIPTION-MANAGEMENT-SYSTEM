@@ -1,0 +1,550 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Root Variables for Light and Dark Modes */
+:root {
+    --bg-color: #121212;
+    --text-color: #fff;
+    --primary-color: #0056b3; /* Dark blue */
+    --secondary-color: #007bff; /* Light blue */
+    --button-bg: linear-gradient(45deg, #2575fc, #6a11cb);
+    --button-hover-bg: linear-gradient(45deg, #6a11cb, #2575fc);
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(0, 0, 0, 0.767);
+    --header-bg: rgba(40, 40, 40, 0.9);
+    --form-input-bg: #333;
+    --form-input-border: #555;
+}
+
+body.dark-mode {
+    --bg-color: #f4f4f9;
+    --text-color: #181818;
+    --primary-color: #007bff; /* Light blue */
+    --secondary-color: #0056b3; /* Dark blue */
+    --button-bg: linear-gradient(45deg, #6a11cb, #2575fc);
+    --button-hover-bg: linear-gradient(45deg, #2575fc, #6a11cb);
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.76);
+    --header-bg: rgba(0, 0, 0, 0.7);
+    --form-input-bg: #f4f4f4;
+    --form-input-border: #ccc;
+}
+
+
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background: var(--bg-color) url('/images/contact-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease-in-out;
+    min-height: 100vh;
+}
+body.dark-mode {
+    background-image: url('/images/contact.jpg'); /* Image for dark mode */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+.success-message {
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* Header */
+header {
+    color: var(--text-color);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+header h1 {
+    font-size: 2rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+header .dashboard-Icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+header .dashboard-Icon:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+header #theme-toggle {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+header #theme-icon {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+header #theme-icon:hover {
+    transform: scale(1.2);
+}
+
+/* Main Container */
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    min-height: calc(100vh - 120px);
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.contact-form,
+.review-form {
+    margin-bottom: 60px; /* Add spacing below each form */
+}
+
+/* Contact Info Section */
+.contact-info {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--card-shadow);
+    width: 45%;
+    text-align: left;
+    opacity: 0;
+    transform: translateX(-100px);
+    animation: slideInLeft 1s forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.contact-info:hover {
+    transform: translateX(0) scale(1.05);
+    box-shadow: 0 8px 20px var(--card-shadow);
+    filter: brightness(0.9);
+}
+.bold-heading {
+    font-weight: bold;
+    font-size: 22px;
+}
+
+.contact-info h2 {
+    font-size: 40px;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.contact-info p {
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+.contact-info p a {
+    font-weight: bold;
+    color: inherit; /* Inherits the text color from the parent element */
+    text-decoration: none;
+}
+
+
+.contact-info a {
+    color: var(--button-bg);
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease-in-out;
+}
+
+.contact-info a:hover {
+    text-decoration: underline;
+    transform: scale(1.05);
+}
+
+/* Contact Form Section */
+.contact-form {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--card-shadow);
+    width: 45%;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: scaleUpFadeIn 1s forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.contact-form:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px var(--card-shadow);
+    filter: brightness(0.9);
+}
+
+.contact-form h2 {
+    font-size: 40px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.contact-form .form-group {
+    margin-bottom: 15px;
+}
+
+.contact-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--form-input-border);
+    background: var(--form-input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    border-color: var(--button-bg);
+    outline: none;
+}
+
+.contact-form button {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: var(--button-bg);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.contact-form button:hover {
+    background: var(--button-hover-bg);
+    transform: scale(1.05);
+}
+
+/* Main Reviews Container */
+.reviews-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px;
+    flex-wrap: wrap; /* Makes it responsive on smaller screens */
+}
+
+/* Review Form Section */
+.review-form {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--card-shadow);
+    flex: 1; /* Allows flexibility for both sections */
+    max-width: 45%; /* Keeps it aligned in larger screens */
+    opacity: 0;
+    transform: scale(0.8);
+    animation: scaleUpFadeIn 1s forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.review-form:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px var(--card-shadow);
+    filter: brightness(0.9);
+}
+
+.review-form h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.review-form .form-group {
+    margin-bottom: 15px;
+}
+
+.review-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.review-form input,
+.review-form textarea,
+.review-form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--form-input-border);
+    background: var(--form-input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.review-form input:focus,
+.review-form textarea:focus,
+.review-form select:focus {
+    border-color: var(--button-bg);
+    outline: none;
+}
+
+.review-form button {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: var(--button-bg);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.review-form button:hover {
+    background: var(--button-hover-bg);
+    transform: scale(1.05);
+}
+
+/* User Reviews Section */
+.user-reviews {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--card-shadow);
+    flex: 1; /* Allows flexibility for both sections */
+    max-width: 45%; /* Keeps it aligned in larger screens */
+    opacity: 0;
+    transform: scale(0.8);
+    animation: scaleUpFadeIn 1s forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.user-reviews:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px var(--card-shadow);
+    filter: brightness(0.9);
+}
+
+.user-reviews h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+}
+.user-reviews p {
+    font-size: 20px;
+    text-align: center;
+}
+
+.user-reviews small {
+    font-size: 10px;
+    text-align: center;
+}
+
+.user-reviews .review {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--form-input-border);
+    border-radius: 10px;
+    background: var(--form-input-bg);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.user-reviews .review p {
+    margin: 5px 0;
+    color: var(--text-color);
+}
+
+.user-reviews .review strong {
+    font-weight: bold;
+    color: var(--button-bg);
+}
+
+.user-reviews .review small {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+}
+
+/* Success Message Styling */
+.success-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    max-width: 400px;
+    margin: 10px auto;
+    position: relative;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Success Icon Styling */
+.success-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Contact Form Success Message */
+.contact-success {
+    background-color: #c8e6c9; /* Light green */
+    border-color: #81c784;
+}
+
+/* Review Form Success Message */
+.review-success {
+    background-color: #bbdefb; /* Light blue */
+    border-color: #64b5f6;
+    color: #0d47a1;
+}
+
+/* Fade-out Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* JavaScript-triggered fade-out */
+.hidden {
+    animation: fadeOut 0.5s ease-in-out forwards;
+}
+
+/* Keyframes */
+@keyframes scaleUpFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 20px;
+    color: var(--text-color);
+}
+
+/* Keyframes */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleUpFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .contact-info,
+    .contact-form {
+        width: 100%;
+        max-width: 500px;
+        animation: fadeIn 1s forwards;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
