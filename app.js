@@ -4,8 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
-// NOTE: notificationsRouter is loaded here, but relies on a function exported below
-const notificationsRouter = require('./routes/notifications')
+// FIX 3: notificationsRouter loading moved *after* the functions it relies on are defined.
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
@@ -77,7 +76,12 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-// FIX 3: DELETED the standalone updateResetToken function definition.
+// FIX 4: Load the notifications router *after* the sendNotificationEmail helper is defined.
+const notificationsRouter = require('./routes/notifications')
+
+
+// FIX 5: DELETED the standalone updateResetToken function definition and integrated logic below.
+
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
