@@ -4,16 +4,12 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
+const notificationsRouter = require('./routes/notifications'); // Loaded here, relies on exported functions below
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
 const flash = require('connect-flash');
 const crypto = require('crypto');
-
-// FIX 1: Consolidate ALL router imports at the top
-const notificationsRouter = require('./routes/notifications');
-const authRoutes = require('./routes/auth');
-const subscriptionRoutes = require('./routes/subscription');
 
 
 const app = express();
@@ -34,7 +30,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// FIX 2: Encapsulated transporter creation into a function to prevent startup crash
+// FIX 1: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -45,10 +41,10 @@ function createEmailTransporter() {
     });
 }
 
-// FIX 3: EXPORTED email sender function for use in the notifications router
+// FIX 2: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
-        const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
+        const userRow = await db.get('SELECT email FROM "users" WHERE id = $1', [userId]);
 
         if (!userRow) { return; }
 
@@ -66,7 +62,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
         await transporter.sendMail(mailOptions);
 
         const insertEmailQuery = `
-            INSERT INTO SentEmails (sender_email, receiver_email, subject, message, sent_at)
+            INSERT INTO "sentemails" (sender_email, receiver_email, subject, message, sent_at)
             VALUES ($1, $2, $3, $4, $5)
         `;
         const timestamp = new Date().toISOString();
@@ -80,7 +76,11 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-// The following function definitions use logic integrated directly into the routes below.
+const updateResetToken = async (email, token, expireTime) => {
+    const query = 'UPDATE "users" SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3';
+    const updatedRows = await db.run(query, [token, expireTime, email.toLowerCase()]);
+    return updatedRows;
+};
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -100,7 +100,7 @@ app.post('/forgot-password', async (req, res) => {
             return res.render('forgot-password', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        const user = await db.get("SELECT * FROM Users WHERE LOWER(email) = $1", [email.toLowerCase()]);
+        const user = await db.get('SELECT * FROM "users" WHERE LOWER(email) = $1', [email.toLowerCase()]);
 
         if (!user) {
             return res.render('forgot-password', { message: 'If an account with that email exists, a reset link has been sent.' });
@@ -109,7 +109,7 @@ app.post('/forgot-password', async (req, res) => {
         const token = crypto.randomBytes(20).toString('hex');
         const expireTime = Date.now() + 3600000;
 
-        const updateQuery = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
+        const updateQuery = 'UPDATE "users" SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3';
         const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
 
         if (updatedRows === 0) {
@@ -161,7 +161,7 @@ app.post('/reset-password', async (req, res) => {
             return res.render('reset-password', { token, email, message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        const user = await db.get("SELECT * FROM Users WHERE reset_token = $1 AND reset_token_expiry > $2", [token, Date.now()]);
+        const user = await db.get('SELECT * FROM "users" WHERE reset_token = $1 AND reset_token_expiry > $2', [token, Date.now()]);
         
         if (!user) {
             return res.render('reset-password', { token, email, message: 'Invalid or expired token.' });
@@ -169,7 +169,7 @@ app.post('/reset-password', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const updateQuery = "UPDATE Users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2";
+        const updateQuery = 'UPDATE "users" SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2';
         await db.run(updateQuery, [hashedPassword, user.id]);
 
         res.render('reset-password', { token, email, message: 'Password updated successfully. Please log in with your new password.' });
@@ -181,10 +181,7 @@ app.post('/reset-password', async (req, res) => {
 });
 
 
-app.use('/auth', authRoutes); 
-app.use('/subscriptions', subscriptionRoutes);
 app.use('/notifications', notificationsRouter);
-
 app.get('/', (req, res) => res.render('index'));
 app.get('/signup', (req, res) => {
     res.render('signup', { message: null });
@@ -198,13 +195,13 @@ app.post('/auth/signup', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        const existingUser = await db.get('SELECT id FROM Users WHERE email = $1', [email]);
+        const existingUser = await db.get('SELECT id FROM "users" WHERE email = $1', [email]);
         
         if (existingUser) {
             return res.render('signup', { message: 'User already exists.' });
@@ -212,7 +209,7 @@ app.post('/auth/signup', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        const insertQuery = 'INSERT INTO Users (email, username, password) VALUES ($1, $2, $3)';
+        const insertQuery = 'INSERT INTO "users" (email, username, password) VALUES ($1, $2, $3)';
         await db.run(insertQuery, [email, username, hashedPassword]);
 
         return res.render('signup', { message: 'User registered successfully. You can now log in!' });
@@ -235,13 +232,13 @@ app.post('/auth/login', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        const user = await db.get('SELECT * FROM Users WHERE username = $1', [username]);
+        const user = await db.get('SELECT * FROM "users" WHERE username = $1', [username]);
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.render('login', { message: 'Invalid username or password.' });
@@ -270,8 +267,8 @@ app.get('/transaction-history', async (req, res) => {
             p.payment_id, p.subscription_name, p.amount, p.currency, 
             p.status, p.payment_method, p.payment_type, p.created_at, 
             pd.payer_name, pd.payer_email
-        FROM Payments p
-        LEFT JOIN PayerDetails pd ON p.payment_id = pd.payment_id
+        FROM "payments" p
+        LEFT JOIN "payerdetails" pd ON p.payment_id = pd.payment_id
         WHERE p.user_id = $1
         ORDER BY p.created_at DESC
     `;
@@ -297,8 +294,8 @@ app.get('/transaction-details/:paymentId', async (req, res) => {
             p.payment_id, p.subscription_name, p.amount, p.currency, 
             p.status, p.payment_method, p.payment_type, p.created_at, 
             pd.payer_name, pd.payer_email
-        FROM Payments p
-        LEFT JOIN PayerDetails pd ON p.payment_id = pd.payment_id
+        FROM "payments" p
+        LEFT JOIN "payerdetails" pd ON p.payment_id = pd.payment_id
         WHERE p.payment_id = $1 AND p.user_id = $2 
     `;
 
@@ -332,7 +329,7 @@ app.use((req, res, next) => {
 app.get('/contact', async (req, res) => {
     try {
         const reviews = await db.all(
-            'SELECT name, rating, review_text, created_at FROM reviews ORDER BY created_at DESC LIMIT 4'
+            'SELECT name, rating, review_text, created_at FROM "reviews" ORDER BY created_at DESC LIMIT 4'
         );
 
         res.render('contact', {
@@ -349,7 +346,7 @@ app.get('/contact', async (req, res) => {
 
 app.post('/submit-contact', async (req, res) => {
     const { name, email, message } = req.body;
-    const query = `INSERT INTO Contacts (name, email, message) VALUES ($1, $2, $3)`; 
+    const query = `INSERT INTO "contacts" (name, email, message) VALUES ($1, $2, $3)`; 
 
     try {
         await db.run(query, [name, email, message]);
@@ -370,7 +367,7 @@ app.post('/submit-review', async (req, res) => {
 
     if (!email || !rating || !review_text) return res.redirect('/contact');
 
-    const query = `INSERT INTO reviews (user_id, name, email, rating, review_text) VALUES ($1, $2, $3, $4, $5)`; 
+    const query = `INSERT INTO "reviews" (user_id, name, email, rating, review_text) VALUES ($1, $2, $3, $4, $5)`; 
 
     try {
         await db.run(query, [userId, name, email, rating, review_text]);
@@ -409,7 +406,7 @@ app.get('/dashboard', async (req, res) => {
     try {
         const subscriptionQuery = `
             SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
-            FROM Subscriptions
+            FROM "subscriptions"
             WHERE user_id = $1
             GROUP BY 1, 2
             ORDER BY 1;
@@ -418,7 +415,7 @@ app.get('/dashboard', async (req, res) => {
 
         const paymentQuery = `
             SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
-            FROM Payments
+            FROM "payments"
             WHERE user_id = $1
             GROUP BY 1, 2
             ORDER BY 1;
@@ -427,7 +424,7 @@ app.get('/dashboard', async (req, res) => {
 
         const payerQuery = `
             SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
-            FROM PayerDetails
+            FROM "payerdetails"
             WHERE user_id = $1;
         `;
         const result = await db.get(payerQuery, [userId]);
@@ -457,7 +454,7 @@ app.get('/notifications', async (req, res) => {
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const query = `
-        SELECT * FROM Subscriptions
+        SELECT * FROM "subscriptions"
         WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
     `;
 
