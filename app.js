@@ -5,18 +5,17 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
 
-// FIX 1: Import all routers here at the top.
-// This requires 'authRoutes' to be defined, which was the cause of the earlier crash.
-const authRoutes = require('./routes/auth');
-const subscriptionRoutes = require('./routes/subscription');
-const notificationsRouter = require('./routes/notifications'); // Loaded here, relies on exported functions below
-
+// NOTE: Router imports are now delayed to the bottom of the file
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
 const flash = require('connect-flash');
 const crypto = require('crypto');
+
+
 const app = express();
+const PORT = 3000;
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -32,7 +31,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// FIX 2: Encapsulated transporter creation into a function to prevent startup crash
+// FIX 1: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -43,7 +42,7 @@ function createEmailTransporter() {
     });
 }
 
-// FIX 3: EXPORTED email sender function for use in the notifications router
+// FIX 2: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
         const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
@@ -79,11 +78,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
 };
 
 // This function's logic is integrated directly into the route below.
-const updateResetToken = async (email, token, expireTime) => {
-    const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
-    const updatedRows = await db.run(query, [token, expireTime, email.toLowerCase()]);
-    return updatedRows;
-};
+// const updateResetToken = async (email, token, expireTime) => { ... };
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -184,8 +179,16 @@ app.post('/reset-password', async (req, res) => {
     }
 });
 
+// *************************************************************************
+// ROUTER LOADING (Moved to the bottom to ensure all functions/models are defined)
+// *************************************************************************
 
-app.use('/auth', authRoutes); // FIX: authRoutes is now defined
+// Require Routers here to use the functions defined above
+const authRoutes = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscription');
+const notificationsRouter = require('./routes/notifications'); // Router definitions must be loaded last
+
+app.use('/auth', authRoutes); 
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/notifications', notificationsRouter);
 
