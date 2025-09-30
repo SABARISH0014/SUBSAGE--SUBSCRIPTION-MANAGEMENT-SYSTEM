@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../database/connection');
+// Removed the redundant nodemailer import here.
 const router = express.Router();
 
 // CRITICAL FIX: Import the centralized email helper function from the main app module

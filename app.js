@@ -4,6 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
+// NOTE: notificationsRouter is loaded here, but relies on a function exported *below*
 const notificationsRouter = require('./routes/notifications')
 const axios = require('axios');
 const nodemailer = require('nodemailer');
