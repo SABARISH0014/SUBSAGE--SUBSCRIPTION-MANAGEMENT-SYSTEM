@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "subsage/app.js",
+      "src": "app.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/subsage/app.js"
+      "dest": "/app.js"
     }
   ]
 }
