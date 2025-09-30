@@ -3,6 +3,7 @@ const db = require('../database/connection');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 
+// NOTE: No top-level 'const transporter = ...' block here.
 
 async function sendNotificationEmail(userId, subscription) {
     try {
@@ -16,19 +17,19 @@ async function sendNotificationEmail(userId, subscription) {
         const subject = `Subscription Expiring Soon: ${subscription.subscription_name}`;
         const message = `Hello,\n\nYour subscription to ${subscription.subscription_name} is expiring soon on ${subscription.expiry}.\nPlease renew it to continue enjoying the benefits.\n\nBest regards,\nSubSage`;
 
+        // FIX: The transporter is now created ASYNC only when the email needs to be sent
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL,
                 pass: process.env.EMAIL_PASSWORD,
-            },
-            debug: false, 
-            logger: false,
+            }
+            // Removed debug/logger options as they are not needed in production
         });
 
         const mailOptions = {
             from: process.env.EMAIL, 
-            to: userEmail,
+            to: userEmail, 
             subject: subject,
             text: message,
         };
@@ -50,6 +51,7 @@ async function sendNotificationEmail(userId, subscription) {
         ]);
 
     } catch (error) {
+        // Log error and allow main function to continue or return 500 if necessary
         console.error('Error in sendNotificationEmail:', error);
     }
 }

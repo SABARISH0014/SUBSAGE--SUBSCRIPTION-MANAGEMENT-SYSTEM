@@ -30,14 +30,17 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// FIX: Encapsulated transporter creation into a function to prevent startup crash
+function createEmailTransporter() {
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASSWORD,
+        }
+    });
+}
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASSWORD,
-    }
-});
 
 const updateResetToken = async (email, token, expireTime) => {
     const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
@@ -84,6 +87,9 @@ app.post('/forgot-password', async (req, res) => {
         const mailOptions = {
             from: process.env.EMAIL, to: email, subject: 'Password Reset', text: `Click the link to reset your password: ${resetLink}`
         };
+        
+        // FIX: Transporter created inside the route when needed
+        const transporter = createEmailTransporter();
 
         transporter.sendMail(mailOptions, (emailErr) => {
             if (emailErr) {
@@ -143,7 +149,6 @@ app.post('/reset-password', async (req, res) => {
 
 
 app.use('/notifications', notificationsRouter);
-// FIX: Changed res.sendFile to res.render (assuming index.ejs exists)
 app.get('/', (req, res) => res.render('index'));
 app.get('/signup', (req, res) => {
     res.render('signup', { message: null });
@@ -366,7 +371,6 @@ app.get('/dashboard', async (req, res) => {
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
     
     try {
-        // FIX: Replaced strftime('%m', start) with TO_CHAR(start::date, 'MM')
         const subscriptionQuery = `
             SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
             FROM Subscriptions
@@ -376,7 +380,6 @@ app.get('/dashboard', async (req, res) => {
         `;
         subscriptionResults = await db.all(subscriptionQuery, [userId]);
 
-        // FIX: Replaced strftime('%m', created_at) with TO_CHAR(created_at::date, 'MM')
         const paymentQuery = `
             SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
             FROM Payments
@@ -391,7 +394,6 @@ app.get('/dashboard', async (req, res) => {
             FROM PayerDetails
             WHERE user_id = $1;
         `;
-        // Ensure result key matches expected object structure
         const result = await db.get(payerQuery, [userId]);
         payerResults = result;
 
@@ -455,7 +457,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// FIX: Changed res.sendFile to res.render (assuming 404.ejs exists)
 app.use((req, res) => {
     res.status(404).render('404');
 });
