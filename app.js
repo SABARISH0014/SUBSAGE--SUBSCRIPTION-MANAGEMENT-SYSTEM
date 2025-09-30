@@ -48,7 +48,7 @@ require('dotenv').config(); 
  // FIX 3: EXPORTED email sender function for use in the notifications router 
  const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) { 
      try { 
-         const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]); 
+         const userRow = await db.get('SELECT email FROM users WHERE id = $1', [userId]); 
 
          if (!userRow) { return; } 
 
@@ -66,7 +66,7 @@ require('dotenv').config(); 
          await transporter.sendMail(mailOptions); 
 
          const insertEmailQuery = ` 
-             INSERT INTO SentEmails (sender_email, receiver_email, subject, message, sent_at) 
+             INSERT INTO sentemails (sender_email, receiver_email, subject, message, sent_at) 
              VALUES ($1, $2, $3, $4, $5) 
          `; 
          const timestamp = new Date().toISOString(); 
@@ -101,7 +101,7 @@ require('dotenv').config(); 
              return res.render('forgot-password', { message: 'reCAPTCHA verification failed. Please try again.' }); 
          } 
 
-         const user = await db.get("SELECT * FROM Users WHERE LOWER(email) = $1", [email.toLowerCase()]); 
+         const user = await db.get("SELECT * FROM users WHERE LOWER(email) = $1", [email.toLowerCase()]); 
 
          if (!user) { 
              return res.render('forgot-password', { message: 'If an account with that email exists, a reset link has been sent.' }); 
@@ -110,7 +110,7 @@ require('dotenv').config(); 
          const token = crypto.randomBytes(20).toString('hex'); 
          const expireTime = Date.now() + 3600000; 
 
-         const updateQuery = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3"; 
+         const updateQuery = "UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3"; 
          const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]); 
 
          if (updatedRows === 0) { 
@@ -162,7 +162,7 @@ require('dotenv').config(); 
              return res.render('reset-password', { token, email, message: 'reCAPTCHA verification failed. Please try again.' }); 
          } 
 
-         const user = await db.get("SELECT * FROM Users WHERE reset_token = $1 AND reset_token_expiry > $2", [token, Date.now()]); 
+         const user = await db.get("SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > $2", [token, Date.now()]); 
           
          if (!user) { 
              return res.render('reset-password', { token, email, message: 'Invalid or expired token.' }); 
@@ -170,7 +170,7 @@ require('dotenv').config(); 
 
          const hashedPassword = await bcrypt.hash(password, 10); 
 
-         const updateQuery = "UPDATE Users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2"; 
+         const updateQuery = "UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2"; 
          await db.run(updateQuery, [hashedPassword, user.id]); 
 
          res.render('reset-password', { token, email, message: 'Password updated successfully. Please log in with your new password.' }); 
@@ -205,7 +205,7 @@ require('dotenv').config(); 
              return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' }); 
          } 
 
-         const existingUser = await db.get('SELECT id FROM Users WHERE email = $1', [email]); 
+         const existingUser = await db.get('SELECT id FROM users WHERE email = $1', [email]); 
           
          if (existingUser) { 
              return res.render('signup', { message: 'User already exists.' }); 
@@ -213,7 +213,7 @@ require('dotenv').config(); 
 
          const hashedPassword = await bcrypt.hash(password, 10); 
           
-         const insertQuery = 'INSERT INTO Users (email, username, password) VALUES ($1, $2, $3)'; 
+         const insertQuery = 'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)'; 
          await db.run(insertQuery, [email, username, hashedPassword]); 
 
          return res.render('signup', { message: 'User registered successfully. You can now log in!' }); 
@@ -242,7 +242,7 @@ require('dotenv').config(); 
              return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' }); 
          } 
 
-         const user = await db.get('SELECT * FROM Users WHERE username = $1', [username]); 
+         const user = await db.get('SELECT * FROM users WHERE username = $1', [username]); 
 
          if (!user || !(await bcrypt.compare(password, user.password))) { 
              return res.render('login', { message: 'Invalid username or password.' }); 
@@ -271,8 +271,8 @@ require('dotenv').config(); 
              p.payment_id, p.subscription_name, p.amount, p.currency,  
              p.status, p.payment_method, p.payment_type, p.created_at,  
              pd.payer_name, pd.payer_email 
-         FROM Payments p 
-         LEFT JOIN PayerDetails pd ON p.payment_id = pd.payment_id 
+         FROM payments p 
+         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id 
          WHERE p.user_id = $1 
          ORDER BY p.created_at DESC 
      `; 
@@ -299,8 +299,8 @@ require('dotenv').config(); 
              p.payment_id, p.subscription_name, p.amount, p.currency,  
              p.status, p.payment_method, p.payment_type, p.created_at,  
              pd.payer_name, pd.payer_email 
-         FROM Payments p 
-         LEFT JOIN PayerDetails pd ON p.payment_id = pd.payment_id 
+         FROM payments p 
+         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id 
          WHERE p.payment_id = $1 AND p.user_id = $2  
      `; 
 
@@ -352,7 +352,7 @@ require('dotenv').config(); 
 
  app.post('/submit-contact', async (req, res) => { 
      const { name, email, message } = req.body; 
-     const query = `INSERT INTO Contacts (name, email, message) VALUES ($1, $2, $3)`;  
+     const query = `INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)`;  
 
      try { 
          await db.run(query, [name, email, message]); 
@@ -412,7 +412,7 @@ require('dotenv').config(); 
      try { 
          const subscriptionQuery = ` 
              SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count 
-             FROM Subscriptions 
+             FROM subscriptions 
              WHERE user_id = $1 
              GROUP BY 1, 2 
              ORDER BY 1; 
@@ -422,7 +422,7 @@ require('dotenv').config(); 
 
          const paymentQuery = ` 
              SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount 
-             FROM Payments 
+             FROM payments 
              WHERE user_id = $1 
              GROUP BY 1, 2 
              ORDER BY 1; 
@@ -432,7 +432,7 @@ require('dotenv').config(); 
 
          const payerQuery = ` 
              SELECT COUNT(DISTINCT payer_email) AS "uniquePayers" 
-             FROM PayerDetails 
+             FROM payerdetails 
              WHERE user_id = $1; 
          `; 
          // Use .trim() to clean invisible characters from the template literal
@@ -463,7 +463,7 @@ require('dotenv').config(); 
      const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); 
 
      const query = ` 
-         SELECT * FROM Subscriptions 
+         SELECT * FROM subscriptions 
          WHERE user_id = $1 AND expiry BETWEEN $2 AND $3 
      `; 
 
