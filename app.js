@@ -4,16 +4,16 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
-
-// FIX 1: Consolidate ALL router imports at the top
-const notificationsRouter = require('./routes/notifications');
-const authRoutes = require('./routes/auth');
-const subscriptionRoutes = require('./routes/subscription');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
 const flash = require('connect-flash');
 const crypto = require('crypto');
+
+// FIX 1: Consolidate ALL router imports at the top
+const notificationsRouter = require('./routes/notifications');
+const authRoutes = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscription');
 
 
 const app = express();
@@ -80,8 +80,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-// FIX 4: DELETED the redundant updateResetToken helper definition.
-// The logic is integrated directly into the route below.
+// The following function definitions use logic integrated directly into the routes below.
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -110,7 +109,6 @@ app.post('/forgot-password', async (req, res) => {
         const token = crypto.randomBytes(20).toString('hex');
         const expireTime = Date.now() + 3600000;
 
-        // FIX: Integrated the update logic here
         const updateQuery = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
         const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
 
