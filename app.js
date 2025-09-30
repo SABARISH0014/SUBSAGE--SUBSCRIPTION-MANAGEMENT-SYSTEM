@@ -5,7 +5,10 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
 
-// NOTE: Router imports are now delayed to the bottom of the file
+// FIX 1: Consolidate ALL router imports at the top
+const notificationsRouter = require('./routes/notifications');
+const authRoutes = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscription');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
@@ -31,7 +34,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// FIX 1: Encapsulated transporter creation into a function to prevent startup crash
+// FIX 2: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -42,7 +45,7 @@ function createEmailTransporter() {
     });
 }
 
-// FIX 2: EXPORTED email sender function for use in the notifications router
+// FIX 3: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
         const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
@@ -77,8 +80,8 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-// This function's logic is integrated directly into the route below.
-// const updateResetToken = async (email, token, expireTime) => { ... };
+// FIX 4: DELETED the redundant updateResetToken helper definition.
+// The logic is integrated directly into the route below.
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -107,7 +110,7 @@ app.post('/forgot-password', async (req, res) => {
         const token = crypto.randomBytes(20).toString('hex');
         const expireTime = Date.now() + 3600000;
 
-        // The update logic is integrated directly here
+        // FIX: Integrated the update logic here
         const updateQuery = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
         const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
 
@@ -179,14 +182,6 @@ app.post('/reset-password', async (req, res) => {
     }
 });
 
-// *************************************************************************
-// ROUTER LOADING (Moved to the bottom to ensure all functions/models are defined)
-// *************************************************************************
-
-// Require Routers here to use the functions defined above
-const authRoutes = require('./routes/auth');
-const subscriptionRoutes = require('./routes/subscription');
-const notificationsRouter = require('./routes/notifications'); // Router definitions must be loaded last
 
 app.use('/auth', authRoutes); 
 app.use('/subscriptions', subscriptionRoutes);
