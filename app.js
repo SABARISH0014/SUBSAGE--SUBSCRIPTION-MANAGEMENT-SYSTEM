@@ -65,9 +65,9 @@ require('dotenv').config(); 
 
          await transporter.sendMail(mailOptions); 
 
-         const insertEmailQuery = ` 
-             INSERT INTO sentemails (sender_email, receiver_email, subject, message, sent_at) 
-             VALUES ($1, $2, $3, $4, $5) 
+         const insertEmailQuery = `
+             INSERT INTO sentemails (sender_email, receiver_email, subject, message, sent_at)
+             VALUES ($1, $2, $3, $4, $5)
          `; 
          const timestamp = new Date().toISOString(); 
           
@@ -266,16 +266,16 @@ require('dotenv').config(); 
 
      const userId = req.session.user.id; 
 
-     const sql = ` 
-         SELECT  
-             p.payment_id, p.subscription_name, p.amount, p.currency,  
-             p.status, p.payment_method, p.payment_type, p.created_at,  
-             pd.payer_name, pd.payer_email 
-         FROM payments p 
-         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id 
-         WHERE p.user_id = $1 
-         ORDER BY p.created_at DESC 
-     `; 
+     const sql = `
+         SELECT
+             p.payment_id, p.subscription_name, p.amount, p.currency,
+             p.status, p.payment_method, p.payment_type, p.created_at,
+             pd.payer_name, pd.payer_email
+         FROM payments p
+         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
+         WHERE p.user_id = $1
+         ORDER BY p.created_at DESC
+        `; 
 
      try { 
          // Use .trim() to clean invisible characters from the template literal
@@ -294,15 +294,15 @@ require('dotenv').config(); 
      const paymentId = req.params.paymentId; 
      const userId = req.session.user.id; 
 
-     const sql = ` 
-         SELECT  
-             p.payment_id, p.subscription_name, p.amount, p.currency,  
-             p.status, p.payment_method, p.payment_type, p.created_at,  
-             pd.payer_name, pd.payer_email 
-         FROM payments p 
-         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id 
-         WHERE p.payment_id = $1 AND p.user_id = $2  
-     `; 
+     const sql = `
+         SELECT
+             p.payment_id, p.subscription_name, p.amount, p.currency,
+             p.status, p.payment_method, p.payment_type, p.created_at,
+             pd.payer_name, pd.payer_email
+         FROM payments p
+         LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
+         WHERE p.payment_id = $1 AND p.user_id = $2
+        `; 
 
      try { 
          // Use .trim() to clean invisible characters from the template literal
@@ -410,30 +410,30 @@ require('dotenv').config(); 
      let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 }; 
       
      try { 
-         const subscriptionQuery = ` 
-             SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count 
-             FROM subscriptions 
-             WHERE user_id = $1 
-             GROUP BY 1, 2 
-             ORDER BY 1; 
+         const subscriptionQuery = `
+             SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
+             FROM subscriptions
+             WHERE user_id = $1
+             GROUP BY 1, 2
+             ORDER BY 1;
          `; 
          // Use .trim() to clean invisible characters from the template literal
          subscriptionResults = await db.all(subscriptionQuery.trim(), [userId]); 
 
-         const paymentQuery = ` 
-             SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount 
-             FROM payments 
-             WHERE user_id = $1 
-             GROUP BY 1, 2 
-             ORDER BY 1; 
+         const paymentQuery = `
+             SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
+             FROM payments
+             WHERE user_id = $1
+             GROUP BY 1, 2
+             ORDER BY 1;
          `; 
          // Use .trim() to clean invisible characters from the template literal
          paymentResults = await db.all(paymentQuery.trim(), [userId]); 
 
-         const payerQuery = ` 
-             SELECT COUNT(DISTINCT payer_email) AS "uniquePayers" 
-             FROM payerdetails 
-             WHERE user_id = $1; 
+         const payerQuery = `
+             SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
+             FROM payerdetails
+             WHERE user_id = $1;
          `; 
          // Use .trim() to clean invisible characters from the template literal
          const result = await db.get(payerQuery.trim(), [userId]); 
@@ -462,9 +462,9 @@ require('dotenv').config(); 
      const currentDate = new Date().toISOString(); 
      const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); 
 
-     const query = ` 
-         SELECT * FROM subscriptions 
-         WHERE user_id = $1 AND expiry BETWEEN $2 AND $3 
+     const query = `
+         SELECT * FROM subscriptions
+         WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
      `; 
 
      try { 
