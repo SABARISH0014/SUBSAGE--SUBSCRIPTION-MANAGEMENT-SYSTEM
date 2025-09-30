@@ -1,60 +1,9 @@
 const express = require('express');
 const db = require('../database/connection');
-const nodemailer = require('nodemailer');
 const router = express.Router();
 
-// NOTE: No top-level 'const transporter = ...' block here.
-
-async function sendNotificationEmail(userId, subscription) {
-    try {
-        const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
-
-        if (!userRow) {
-            return;
-        }
-
-        const userEmail = userRow.email; 
-        const subject = `Subscription Expiring Soon: ${subscription.subscription_name}`;
-        const message = `Hello,\n\nYour subscription to ${subscription.subscription_name} is expiring soon on ${subscription.expiry}.\nPlease renew it to continue enjoying the benefits.\n\nBest regards,\nSubSage`;
-
-        // FIX: The transporter is now created ASYNC only when the email needs to be sent
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASSWORD,
-            }
-            // Removed debug/logger options as they are not needed in production
-        });
-
-        const mailOptions = {
-            from: process.env.EMAIL, 
-            to: userEmail, 
-            subject: subject,
-            text: message,
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        const insertEmailQuery = `
-            INSERT INTO SentEmails (sender_email, receiver_email, subject, message, sent_at)
-            VALUES ($1, $2, $3, $4, $5)
-        `;
-        const timestamp = new Date().toISOString();
-        
-        await db.run(insertEmailQuery, [
-            process.env.EMAIL, 
-            userEmail, 
-            subject, 
-            message,
-            timestamp
-        ]);
-
-    } catch (error) {
-        // Log error and allow main function to continue or return 500 if necessary
-        console.error('Error in sendNotificationEmail:', error);
-    }
-}
+// CRITICAL FIX: Import the centralized email helper function from the main app module
+const { sendNotificationEmail } = require('../app');
 
 
 router.get('/', async (req, res) => {
@@ -103,6 +52,7 @@ router.get('/', async (req, res) => {
                 notification.notified_at,
             ]);
             
+            // Now correctly calls the exported function from app.js
             await sendNotificationEmail(notification.user_id, notification);
         }
 
@@ -138,6 +88,7 @@ router.post('/store', async (req, res) => {
 
         await db.run(insertQuery, [user_id, subscription_id, subscription_name, subscription_type, expiry, message, notified_at]);
         
+        // Now correctly calls the exported function from app.js
         await sendNotificationEmail(user_id, {
             subscription_name: subscription_name,
             expiry: expiry,

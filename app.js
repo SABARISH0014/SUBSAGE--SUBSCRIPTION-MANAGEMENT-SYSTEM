@@ -41,6 +41,48 @@ function createEmailTransporter() {
     });
 }
 
+// FIX: DEFINITION OF EMAIL HELPER (MUST BE DEFINED BEFORE ROUTERS ARE USED)
+const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
+    try {
+        const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
+
+        if (!userRow) { return; }
+
+        const userEmail = userRow.email; 
+        const subject = `Subscription Expiring Soon: ${subscription.subscription_name}`;
+        const message = `Hello,\n\nYour subscription to ${subscription.subscription_name} is expiring soon on ${subscription.expiry}.\nPlease renew it to continue enjoying the benefits.\n\nBest regards,\nSubSage`;
+
+        // Transporter is created safely inside the function call stack
+        const transporter = createEmailTransporter(); 
+
+        const mailOptions = {
+            from: process.env.EMAIL, 
+            to: userEmail, 
+            subject: subject,
+            text: message,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        const insertEmailQuery = `
+            INSERT INTO SentEmails (sender_email, receiver_email, subject, message, sent_at)
+            VALUES ($1, $2, $3, $4, $5)
+        `;
+        const timestamp = new Date().toISOString();
+        
+        await db.run(insertEmailQuery, [
+            process.env.EMAIL, 
+            userEmail, 
+            subject, 
+            message,
+            timestamp
+        ]);
+
+    } catch (error) {
+        console.error('Error in sendNotificationEmail:', error);
+    }
+};
+
 
 const updateResetToken = async (email, token, expireTime) => {
     const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
@@ -88,7 +130,6 @@ app.post('/forgot-password', async (req, res) => {
             from: process.env.EMAIL, to: email, subject: 'Password Reset', text: `Click the link to reset your password: ${resetLink}`
         };
         
-        // FIX: Transporter created inside the route when needed
         const transporter = createEmailTransporter();
 
         transporter.sendMail(mailOptions, (emailErr) => {
