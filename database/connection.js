@@ -1,63 +1,65 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-// Specify the correct absolute path to your database file
-const dbPath = 'C:/Users/sabar/OneDrive/Desktop/SubSage/database/database.sqlite';
+// Vercel automatically provides the DATABASE_URL environment variable 
+// which contains the full connection string to Neon/Postgres.
+const connectionString = process.env.DATABASE_URL;
 
-// Create a new database connection
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error connecting to database:', err.message);
-  } else {
-    console.log('Connected to the SQLite database.');
-  }
+// Create a connection pool to manage concurrent database interactions
+const pool = new Pool({
+  connectionString: connectionString,
 });
 
-// Ensure that the database is connected before running any queries
-db.serialize(() => {
-  console.log("Database connected");
-
-  // Create Users table if it doesn't exist
-  const createUsersTable = `
-    CREATE TABLE IF NOT EXISTS Users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL UNIQUE,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-    );
-`;
-
-
-
-  db.run(createUsersTable, (err) => {
+// Optional: Test the connection once to ensure the connection string is valid
+pool.connect((err, client, release) => {
     if (err) {
-      console.error('Error creating Users table:', err.message);
-    } else {
-      console.log('Users table created or already exists.');
+        console.error('Error acquiring client from pool:', err.stack);
+        // It's crucial to throw an error here to catch deployment issues early
+        throw new Error('Database connection failed to initialize!');
     }
-  });
-
-  // Create the Subscriptions table if it doesn't already exist
-  const createSubscriptionsTable = `
-      CREATE TABLE IF NOT EXISTS "Subscriptions" (
-        "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-        "user_id" INTEGER NOT NULL,         -- Add user_id field
-        "name" TEXT NOT NULL,
-        "type" TEXT NOT NULL,
-        "start" TEXT NOT NULL,
-        "expiry" TEXT NOT NULL,
-        "amount" REAL NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES Users(id)  -- Foreign key reference to Users table
-  )`;
-
-  db.run(createSubscriptionsTable, (err) => {
-    if (err) {
-      console.error('Error creating Subscriptions table:', err.message);
-    } else {
-      console.log('Subscriptions table created or already exists.');
-    }
-  });
+    client.release();
+    console.log('PostgreSQL Pool connected successfully!');
 });
 
-// Export the database connection for use in other parts of your application
-module.exports = db;
+
+// ----------------------------------------------------------------------
+// EXPORT FUNCTIONS: Must be ASYNCHRONOUS (async/await)
+// These replace your old synchronous db.get, db.all, and db.run calls.
+// ----------------------------------------------------------------------
+
+module.exports = {
+  /**
+   * Executes a query that expects multiple rows (replaces db.all)
+   * @param {string} text - The SQL query text.
+   * @param {Array} params - The parameter values.
+   */
+  async all(text, params) {
+    const res = await pool.query(text, params);
+    return res.rows;
+  },
+
+  /**
+   * Executes a query that expects a single row (replaces db.get)
+   * @param {string} text - The SQL query text.
+   * @param {Array} params - The parameter values.
+   */
+  async get(text, params) {
+    const res = await pool.query(text, params);
+    return res.rows[0];
+  },
+
+  /**
+   * Executes a query (INSERT, UPDATE, DELETE) that doesn't return data (replaces db.run)
+   * @param {string} text - The SQL query text.
+   * @param {Array} params - The parameter values.
+   */
+  async run(text, params) {
+    // Note: The 'pg' client does not have a direct '.run' equivalent. 
+    // We use pool.query and check the result for changes.
+    const res = await pool.query(text, params);
+    // Return rowCount to mimic SQLite's affected rows count or success status
+    return res.rowCount; 
+  },
+  
+  // This is the raw query function, useful for complex transactions
+  query: (text, params) => pool.query(text, params),
+};
