@@ -232,7 +232,7 @@ app.post('/auth/login', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' });
