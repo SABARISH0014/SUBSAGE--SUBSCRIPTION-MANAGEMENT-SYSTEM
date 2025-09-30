@@ -41,7 +41,7 @@ function createEmailTransporter() {
     });
 }
 
-// FIX: DEFINITION OF EMAIL HELPER (MUST BE DEFINED BEFORE ROUTERS ARE USED)
+// FIX: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
         const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
@@ -56,10 +56,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
         const transporter = createEmailTransporter(); 
 
         const mailOptions = {
-            from: process.env.EMAIL, 
-            to: userEmail, 
-            subject: subject,
-            text: message,
+            from: process.env.EMAIL, to: userEmail, subject: subject, text: message,
         };
 
         await transporter.sendMail(mailOptions);
@@ -71,11 +68,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
         const timestamp = new Date().toISOString();
         
         await db.run(insertEmailQuery, [
-            process.env.EMAIL, 
-            userEmail, 
-            subject, 
-            message,
-            timestamp
+            process.env.EMAIL, userEmail, subject, message, timestamp
         ]);
 
     } catch (error) {
@@ -83,13 +76,11 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-
 const updateResetToken = async (email, token, expireTime) => {
     const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
     const updatedRows = await db.run(query, [token, expireTime, email.toLowerCase()]);
     return updatedRows;
 };
-
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
