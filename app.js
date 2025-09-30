@@ -4,7 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
-const notificationsRouter = require('./routes/notifications'); // Loaded here, relies on exported functions below
+const notificationsRouter = require('./routes/notifications')
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
@@ -195,7 +195,7 @@ app.post('/auth/signup', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' });
@@ -232,7 +232,7 @@ app.post('/auth/login', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' });
@@ -346,7 +346,7 @@ app.get('/contact', async (req, res) => {
 
 app.post('/submit-contact', async (req, res) => {
     const { name, email, message } = req.body;
-    const query = `INSERT INTO "contacts" (name, email, message) VALUES ($1, $2, $3)`; 
+    const query = 'INSERT INTO "contacts" (name, email, message) VALUES ($1, $2, $3)'; 
 
     try {
         await db.run(query, [name, email, message]);
