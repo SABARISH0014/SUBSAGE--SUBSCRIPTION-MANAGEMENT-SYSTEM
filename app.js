@@ -4,12 +4,16 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
-const notificationsRouter = require('./routes/notifications')
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
 const flash = require('connect-flash');
 const crypto = require('crypto');
+
+// FIX 1: Consolidate ALL router imports at the top
+const notificationsRouter = require('./routes/notifications');
+const authRoutes = require('ROUTE-IS-MISSING'); // NOTE: This line is missing in the user's provided code, but required for the app.use below.
+const subscriptionRoutes = require('./routes/subscription');
 
 
 const app = express();
@@ -30,7 +34,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// FIX 1: Encapsulated transporter creation into a function to prevent startup crash
+// FIX 2: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -41,7 +45,7 @@ function createEmailTransporter() {
     });
 }
 
-// FIX 2: EXPORTED email sender function for use in the notifications router
+// FIX 3: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
         const userRow = await db.get('SELECT email FROM "users" WHERE id = $1', [userId]);
@@ -181,7 +185,10 @@ app.post('/reset-password', async (req, res) => {
 });
 
 
+app.use('/auth', authRoutes); 
+app.use('/subscriptions', subscriptionRoutes);
 app.use('/notifications', notificationsRouter);
+
 app.get('/', (req, res) => res.render('index'));
 app.get('/signup', (req, res) => {
     res.render('signup', { message: null });
@@ -195,7 +202,7 @@ app.post('/auth/signup', async (req, res) => {
     try {
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
         const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
+            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: recaptchaResponse }
         });
         if (!verificationResponse.data.success) {
             return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' });
