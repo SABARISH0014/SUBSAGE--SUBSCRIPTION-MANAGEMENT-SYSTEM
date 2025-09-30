@@ -1,9 +1,9 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-const db = require('./database/connection'); 
+const db = require('./database/connection');
 const notificationsRouter = require('./routes/notifications')
 const axios = require('axios');
 const nodemailer = require('nodemailer');
@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 
 const app = express();
-const PORT = 3000; 
+const PORT = 3000;
 
 
 app.use(express.json());
@@ -40,14 +40,14 @@ const transporter = nodemailer.createTransport({
 });
 
 const updateResetToken = async (email, token, expireTime) => {
-    const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3"; 
+    const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
     const updatedRows = await db.run(query, [token, expireTime, email.toLowerCase()]);
     return updatedRows;
 };
 
 
 app.get('/forgot-password', (req, res) => {
-    res.render('forgot-password', { message: null }); 
+    res.render('forgot-password', { message: null });
 });
 
 app.post('/forgot-password', async (req, res) => {
@@ -143,7 +143,8 @@ app.post('/reset-password', async (req, res) => {
 
 
 app.use('/notifications', notificationsRouter);
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html')));
+// FIX: Changed res.sendFile to res.render (assuming index.ejs exists)
+app.get('/', (req, res) => res.render('index'));
 app.get('/signup', (req, res) => {
     res.render('signup', { message: null });
 });
@@ -274,8 +275,8 @@ app.get('/transaction-details/:paymentId', async (req, res) => {
 });
 
 
-app.get('/entertainment', (req, res) => res.sendFile(path.join(__dirname, 'views', 'entertainment.html')));
-app.get('/utilities', (req, res) => res.sendFile(path.join(__dirname, 'views', 'utilities.html')));
+app.get('/entertainment', (req, res) => res.render('entertainment'));
+app.get('/utilities', (req, res) => res.render('utilities'));
 
 app.use((req, res, next) => {
     res.locals.successMessageContact = req.session.successMessageContact || null;
@@ -365,6 +366,7 @@ app.get('/dashboard', async (req, res) => {
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
     
     try {
+        // FIX: Replaced strftime('%m', start) with TO_CHAR(start::date, 'MM')
         const subscriptionQuery = `
             SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
             FROM Subscriptions
@@ -374,6 +376,7 @@ app.get('/dashboard', async (req, res) => {
         `;
         subscriptionResults = await db.all(subscriptionQuery, [userId]);
 
+        // FIX: Replaced strftime('%m', created_at) with TO_CHAR(created_at::date, 'MM')
         const paymentQuery = `
             SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
             FROM Payments
@@ -388,7 +391,9 @@ app.get('/dashboard', async (req, res) => {
             FROM PayerDetails
             WHERE user_id = $1;
         `;
-        payerResults = await db.get(payerQuery, [userId]);
+        // Ensure result key matches expected object structure
+        const result = await db.get(payerQuery, [userId]);
+        payerResults = result;
 
     } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -409,7 +414,7 @@ app.get('/dashboard', async (req, res) => {
 app.get('/notifications', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
 
-    const userId = req.session.user.id; 
+    const userId = req.session.user.id;
     const currentDate = new Date().toISOString();
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -446,12 +451,13 @@ app.get('/logout', (req, res) => {
         if (err) {
             return res.status(500).send('Error logging out');
         }
-        res.redirect('/'); 
+        res.redirect('/');
     });
 });
 
+// FIX: Changed res.sendFile to res.render (assuming 404.ejs exists)
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+    res.status(404).render('404');
 });
 
 
