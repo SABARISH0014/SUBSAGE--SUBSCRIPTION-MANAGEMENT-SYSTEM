@@ -4,7 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection');
-// NOTE: notificationsRouter is loaded here, but relies on a function exported *below*
+// NOTE: notificationsRouter is loaded here, but relies on a function exported below
 const notificationsRouter = require('./routes/notifications')
 const axios = require('axios');
 const nodemailer = require('nodemailer');
@@ -31,7 +31,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// FIX: Encapsulated transporter creation into a function to prevent startup crash
+// FIX 1: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -42,7 +42,7 @@ function createEmailTransporter() {
     });
 }
 
-// FIX: EXPORTED email sender function for use in the notifications router
+// FIX 2: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
         const userRow = await db.get('SELECT email FROM "Users" WHERE id = $1', [userId]);
@@ -77,11 +77,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
     }
 };
 
-const updateResetToken = async (email, token, expireTime) => {
-    const query = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
-    const updatedRows = await db.run(query, [token, expireTime, email.toLowerCase()]);
-    return updatedRows;
-};
+// FIX 3: DELETED the standalone updateResetToken function definition.
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -110,7 +106,10 @@ app.post('/forgot-password', async (req, res) => {
         const token = crypto.randomBytes(20).toString('hex');
         const expireTime = Date.now() + 3600000;
 
-        const updatedRows = await updateResetToken(email, token, expireTime);
+        // FIX: Integrated the update logic here, replacing the standalone helper call.
+        const updateQuery = "UPDATE Users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
+        const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
+        // END FIX
 
         if (updatedRows === 0) {
             return res.render('forgot-password', { message: 'Error updating reset token. Please try again.' });
