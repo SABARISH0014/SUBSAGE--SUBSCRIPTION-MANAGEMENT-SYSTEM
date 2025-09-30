@@ -1,146 +1,121 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe Secret Key
-const sqlite3 = require('sqlite3').verbose();
-const dotenv = require('dotenv');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
-const db = require('../database/connection'); // Raw sqlite3 connection
+// IMPORTANT: db now uses async functions (get, all, run) from the pg client
+const db = require('../database/connection'); 
 
-// Load environment variables
-dotenv.config();
-
-// Route to render payments page
-router.get('/', (req, res) => {
+// Route to render payments page (FIXED - ASYNC)
+router.get('/', async (req, res) => {
     const userId = req.session && req.session.user ? req.session.user.id : req.query.user_id;
-    const subscriptionId = req.query.subscription_id;
 
     if (!userId) {
         return res.status(400).send('User ID is required.');
     }
 
-    // Fetch user data from the database
-    db.get('SELECT * FROM Users WHERE id = ?', [userId], (err, user) => {
-        if (err) {
-            console.error('Error fetching user details:', err);
-            return res.status(500).send('Error fetching user details.');
-        }
+    try {
+        // ASYNC Call: Fetch user data using $1
+        const user = await db.get('SELECT * FROM "Users" WHERE id = $1', [userId]);
 
         if (!user) {
             return res.status(404).send('User not found.');
         }
 
-        // Fetch subscription data
+        const subscriptionId = req.query.subscription_id;
+        
+        // Define query and params using PostgreSQL placeholders ($1, $2)
         const query = subscriptionId
-            ? 'SELECT * FROM Subscriptions WHERE id = ? AND user_id = ?'
-            : 'SELECT * FROM Subscriptions WHERE user_id = ?';
+            ? 'SELECT * FROM "Subscriptions" WHERE id = $1 AND user_id = $2'
+            : 'SELECT * FROM "Subscriptions" WHERE user_id = $1';
         const params = subscriptionId ? [subscriptionId, userId] : [userId];
 
-        db.all(query, params, (err, subscriptions) => {
-            if (err) {
-                console.error('Error fetching subscriptions:', err.message);
-                return res.render('payments', { 
-                    user_id: user.id, 
-                    subscriptions: [], 
-                    stripePublicKey: process.env.STRIPE_PUBLIC_KEY, 
-                    message: 'Error fetching subscriptions. Please try again later.' 
-                });
-            }
-        
-            if (!subscriptions || subscriptions.length === 0) {
-                return res.render('payments', { 
-                    user_id: user.id, 
-                    subscriptions: [], 
-                    stripePublicKey: process.env.STRIPE_PUBLIC_KEY, 
-                    message: 'No subscriptions found.' 
-                });
-            }
-        
-            // Determine if the "Extend" option should be allowed for each subscription
-            const currentDate = new Date();
-            subscriptions.forEach((subscription) => {
-                const expiryDate = new Date(subscription.expiry);
-                const daysRemaining = Math.ceil((expiryDate - currentDate) / (1000 * 60 * 60 * 24));
-        
-                // Add a flag to indicate if "Extend" is allowed
-                subscription.allowExtend = daysRemaining <= 7;
+        // ASYNC Call: Fetch subscription data
+        const subscriptions = await db.all(query, params);
+
+        if (!subscriptions || subscriptions.length === 0) {
+            return res.render('payments', { 
+                user_id: user.id, 
+                subscriptions: [], 
+                stripePublicKey: process.env.STRIPE_PUBLIC_KEY, 
+                message: 'No subscriptions found.' 
             });
+        }
         
-            // Render payments page with subscriptions
-            res.render('payments', {
-                user_id: user.id,
-                subscriptions,
-                stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
-                message: null // No error
-            });
+        // Determine if the "Extend" option should be allowed for each subscription
+        const currentDate = new Date();
+        subscriptions.forEach((subscription) => {
+            const expiryDate = new Date(subscription.expiry);
+            const daysRemaining = Math.ceil((expiryDate - currentDate) / (1000 * 60 * 60 * 24));
+            
+            subscription.allowExtend = daysRemaining <= 7;
         });
         
-    });
+        // Render payments page with subscriptions
+        res.render('payments', {
+            user_id: user.id,
+            subscriptions,
+            stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+            message: null
+        });
+
+    } catch (err) {
+        console.error('Error fetching data for payments page:', err);
+        return res.status(500).send('Error loading payments page.');
+    }
 });
 
 router.post('/create-checkout-session', async (req, res) => {
     const { subscription_name, amount, subscription_id, payment_type } = req.body;
-    const sanitizedAmount = Math.round(parseFloat(amount) * 100); // Convert to smallest unit (paise)
+    const sanitizedAmount = Math.round(parseFloat(amount) * 100);
 
     if (isNaN(sanitizedAmount) || sanitizedAmount <= 0) {
         return res.status(400).json({ error: 'Invalid amount value' });
     }
 
-    // Check if a successful payment exists for this subscription
-    db.all(
-        `SELECT * FROM Payments WHERE subscription_id = ? AND status = 'succeeded'`,
-        [subscription_id],
-        (err, payments) => {
-            if (err) {
-                console.error('Error checking previous payments:', err);
-                return res.status(500).json({ error: 'Database error while checking payment history.' });
+    try {
+        // ASYNC Call: Check if a successful payment exists for this subscription using $1
+        const payments = await db.all(
+            `SELECT * FROM "Payments" WHERE subscription_id = $1 AND status = 'succeeded'`,
+            [subscription_id]
+        );
+
+        const hasNormalPayment = payments.some(payment => payment.payment_type === 'normal');
+        const hasExtendPayment = payments.some(payment => payment.payment_type === 'extend');
+
+        if (hasNormalPayment && payment_type === 'normal') {
+            return res.status(400).json({ error: 'You have already made a normal payment for this subscription.' });
+        }
+
+        if (hasExtendPayment && payment_type === 'normal') {
+            return res.status(400).json({ error: 'You cannot make a normal payment after extending this subscription.' });
+        }
+
+        if (payment_type === 'extend') {
+            // ASYNC Call: Get subscription expiry date for extension check using $1
+            const subscription = await db.get('SELECT expiry FROM "Subscriptions" WHERE id = $1', [subscription_id]);
+
+            if (!subscription) {
+                return res.status(404).send('Subscription not found.');
             }
 
-            // Check if a normal payment exists
-            const hasNormalPayment = payments.some(payment => payment.payment_type === 'normal');
-            // Check if an extend payment exists
-            const hasExtendPayment = payments.some(payment => payment.payment_type === 'extend');
+            const expiryDate = new Date(subscription.expiry);
+            const daysRemaining = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
 
-            // Block normal payment if a successful normal payment already exists
-            if (hasNormalPayment && payment_type === 'normal') {
-                return res.status(400).json({ error: 'You have already made a normal payment for this subscription.' });
-            }
-
-            // Block normal payment if an extension payment exists
-            if (hasExtendPayment && payment_type === 'normal') {
-                return res.status(400).json({ error: 'You cannot make a normal payment after extending this subscription.' });
-            }
-
-            // If payment type is "extend", check if extension is allowed
-            if (payment_type === 'extend') {
-                db.get('SELECT expiry FROM Subscriptions WHERE id = ?', [subscription_id], (err, subscription) => {
-                    if (err) {
-                        console.error('Error fetching subscription:', err);
-                        return res.status(500).send('Error fetching subscription.');
-                    }
-
-                    if (!subscription) {
-                        return res.status(404).send('Subscription not found.');
-                    }
-
-                    const expiryDate = new Date(subscription.expiry);
-                    const daysRemaining = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-
-                    if (daysRemaining > 7) {
-                        return res.status(400).json({ error: 'Extension is not allowed for this subscription.' });
-                    }
-
-                    // Proceed with Stripe checkout session creation
-                    createStripeSession(res, subscription_name, sanitizedAmount, subscription_id, payment_type);
-                });
-            } else {
-                // Proceed with Stripe checkout session creation for normal payment
-                createStripeSession(res, subscription_name, sanitizedAmount, subscription_id, payment_type);
+            if (daysRemaining > 7) {
+                return res.status(400).json({ error: 'Extension is not allowed for this subscription.' });
             }
         }
-    );
+        
+        // Proceed with Stripe checkout session creation
+        await createStripeSession(res, subscription_name, sanitizedAmount, subscription_id, payment_type);
+
+    } catch (error) {
+        console.error('Error in checkout session creation:', error);
+        return res.status(500).json({ error: 'Server error while checking payment rules.' });
+    }
 });
 
 
-// Function to create a Stripe checkout session
+// Function to create a Stripe checkout session (remains ASYNC)
 async function createStripeSession(res, subscription_name, sanitizedAmount, subscription_id, payment_type) {
     try {
         const session = await stripe.checkout.sessions.create({
@@ -161,7 +136,6 @@ async function createStripeSession(res, subscription_name, sanitizedAmount, subs
             metadata: { subscription_id, payment_type },
         });
 
-        console.log('Stripe session created:', session);
         res.status(200).json({ url: session.url });
     } catch (error) {
         console.error('Error creating Stripe session:', error);
@@ -169,18 +143,16 @@ async function createStripeSession(res, subscription_name, sanitizedAmount, subs
     }
 }
 
-// Route to handle payment success
+// Route to handle payment success (remains ASYNC)
 router.get('/success', async (req, res) => {
     const sessionId = req.query.session_id;
 
-    // Check if session_id is provided in the query
     if (!sessionId) {
         console.error('Session ID is missing in the query parameters');
         return res.status(400).send('Session ID is missing');
     }
 
     try {
-        // Retrieve Stripe session details
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
         if (!session || !session.payment_intent) {
@@ -188,16 +160,11 @@ router.get('/success', async (req, res) => {
             return res.status(400).send('Invalid session or missing payment intent');
         }
 
-        // Confirm payment intent
         const paymentIntent = session.payment_intent;
         const paymentDetails = await stripe.paymentIntents.retrieve(paymentIntent);
 
         if (paymentDetails.status === 'succeeded') {
-            console.log('Payment successful:', paymentDetails);
-
-            // Proceed with payment processing
             await proceedWithPayment(sessionId);
-
             res.redirect(`/payments`);
         } else {
             console.error('Payment not completed. Status:', paymentDetails.status);
@@ -209,6 +176,7 @@ router.get('/success', async (req, res) => {
     }
 });
 
+// Helper function to insert data after successful payment (FIXED - ASYNC)
 async function proceedWithPayment(sessionId) {
     try {
         if (!sessionId) {
@@ -231,24 +199,20 @@ async function proceedWithPayment(sessionId) {
 
         const status = paymentDetails.status === 'succeeded' ? 'succeeded' : 'failed';
 
-        const subscription = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM Subscriptions WHERE id = ?', [subscriptionId], (err, subscription) => {
-                if (err) reject(err);
-                else resolve(subscription);
-            });
-        });
+        // ASYNC Call: Get subscription details using $1
+        const subscription = await db.get('SELECT * FROM "Subscriptions" WHERE id = $1', [subscriptionId]);
 
         if (!subscription) {
             console.error(`Subscription not found for ID: ${subscriptionId}`);
             return;
         }
 
-        // Insert payment details
+        // Insert payment details using $1 to $11
         const insertPaymentSql = `
-            INSERT INTO Payments (payment_id, user_id, subscription_id, subscription_name, amount, currency, status, payment_type, payment_method, latest_charge, payment_intent_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO "Payments" (payment_id, user_id, subscription_id, subscription_name, amount, currency, status, payment_type, payment_method, latest_charge, payment_intent_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `;
-        db.run(
+        await db.run(
             insertPaymentSql,
             [
                 paymentIntentId,
@@ -265,11 +229,12 @@ async function proceedWithPayment(sessionId) {
             ]
         );
 
+        // Insert payer details using $1 to $5
         const insertPayerDetailsSql = `
-            INSERT INTO PayerDetails (payment_id, user_id, payer_name, payer_email, address_country)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO "PayerDetails" (payment_id, user_id, payer_name, payer_email, address_country)
+            VALUES ($1, $2, $3, $4, $5)
         `;
-        db.run(
+        await db.run(
             insertPayerDetailsSql,
             [
                 paymentIntentId,
@@ -289,10 +254,11 @@ async function proceedWithPayment(sessionId) {
     }
 }
 
-// Function to update subscription dates for "extend" payment type
+// Function to update subscription dates for "extend" payment type (FIXED - ASYNC)
 async function updateSubscriptionDates(subscription) {
     try {
         const currentExpiry = new Date(subscription.expiry);
+        // Calculate new start and expiry dates
         const newStartDate = new Date(currentExpiry);
         newStartDate.setDate(currentExpiry.getDate() + 1);
 
@@ -300,9 +266,9 @@ async function updateSubscriptionDates(subscription) {
         newExpiryDate.setDate(newStartDate.getDate() + 30); // Extend by 30 days
 
         const updateSubscriptionSql = `
-            UPDATE Subscriptions SET start = ?, expiry = ? WHERE id = ?
+            UPDATE "Subscriptions" SET start = $1, expiry = $2 WHERE id = $3
         `;
-        db.run(
+        await db.run(
             updateSubscriptionSql,
             [newStartDate.toISOString(), newExpiryDate.toISOString(), subscription.id]
         );
