@@ -71,7 +71,8 @@ require('dotenv').config(); 
          `; 
          const timestamp = new Date().toISOString(); 
           
-         await db.run(insertEmailQuery, [ 
+         // Use .trim() to clean invisible characters from the template literal
+         await db.run(insertEmailQuery.trim(), [ 
              process.env.EMAIL, userEmail, subject, message, timestamp 
          ]); 
 
@@ -277,7 +278,8 @@ require('dotenv').config(); 
      `; 
 
      try { 
-         const transactions = await db.all(sql, [userId]);  
+         // Use .trim() to clean invisible characters from the template literal
+         const transactions = await db.all(sql.trim(), [userId]);  
 
          res.render('transaction-history', { transactions }); 
      } catch (err) { 
@@ -303,7 +305,8 @@ require('dotenv').config(); 
      `; 
 
      try { 
-         const transaction = await db.get(sql, [paymentId, userId]);  
+         // Use .trim() to clean invisible characters from the template literal
+         const transaction = await db.get(sql.trim(), [paymentId, userId]);  
 
          if (!transaction) { 
              return res.status(404).send("Transaction not found or unauthorized access"); 
@@ -414,7 +417,8 @@ require('dotenv').config(); 
              GROUP BY 1, 2 
              ORDER BY 1; 
          `; 
-         subscriptionResults = await db.all(subscriptionQuery, [userId]); 
+         // Use .trim() to clean invisible characters from the template literal
+         subscriptionResults = await db.all(subscriptionQuery.trim(), [userId]); 
 
          const paymentQuery = ` 
              SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount 
@@ -423,14 +427,16 @@ require('dotenv').config(); 
              GROUP BY 1, 2 
              ORDER BY 1; 
          `; 
-         paymentResults = await db.all(paymentQuery, [userId]); 
+         // Use .trim() to clean invisible characters from the template literal
+         paymentResults = await db.all(paymentQuery.trim(), [userId]); 
 
          const payerQuery = ` 
              SELECT COUNT(DISTINCT payer_email) AS "uniquePayers" 
              FROM PayerDetails 
              WHERE user_id = $1; 
          `; 
-         const result = await db.get(payerQuery, [userId]); 
+         // Use .trim() to clean invisible characters from the template literal
+         const result = await db.get(payerQuery.trim(), [userId]); 
          payerResults = result; 
 
      } catch (err) { 
@@ -462,7 +468,8 @@ require('dotenv').config(); 
      `; 
 
      try { 
-         const subscriptions = await db.all(query, [userId, currentDate, nextWeekDate]); 
+         // Use .trim() to clean invisible characters from the template literal
+         const subscriptions = await db.all(query.trim(), [userId, currentDate, nextWeekDate]); 
           
          const notifications = subscriptions.map(subscription => { 
              return { 
