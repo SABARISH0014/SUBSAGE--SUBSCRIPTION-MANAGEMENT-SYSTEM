@@ -123,9 +123,9 @@ body {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    /* FIX: This padding ensures scrollable content (like the forget password link) 
-       is visible above the fixed footer at the bottom. */
+    /* Keeps content scrollable */
     overflow-y: auto; 
+    /* Provides space for the fixed footer at the bottom of the scroll */
     padding-bottom: 100px;
 }
 
@@ -158,11 +158,9 @@ body.dark-mode {
 .g-recaptcha {
     margin-top: 10px;
     display: inline-block;
-    /* Cleaned up potential invisible character here */
     transform: scale(1.1); /* Optional: adjust reCAPTCHA size */
 }
 #error-message {
-    /* This section is confirmed as valid */
     color: red;
     font-size: 18px;
     font-weight: bold;
@@ -259,7 +257,6 @@ form button[type="submit"] {
     border-radius: 25px;
     color: #fff;
     cursor: pointer;
-    /* Uses the existing button styles via the .btn class in HTML */
     background: var(--button-bg);
     transition: all 0.3s ease-in-out;
     margin-top: 10px;
@@ -271,13 +268,12 @@ form button:hover {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Additional Styles for Create new account and Sign in (includes 'forget password' link) */
+/* Additional Styles for links (includes 'forget password' link) */
 p {
     margin-top: 20px;
     font-size: 1rem;
     color: var(--text-color);
     transition: all 0.3s ease-in-out;
-    /* Removed unnecessary z-index as padding on body solves fixed element overlap */
 }
 
 p a {
@@ -292,16 +288,17 @@ p a:hover {
     text-decoration: underline;
 }
 
-/* FOOTER - FIXED POSITIONING (Unscrollable) */
+/* FOOTER - LOCKED TO VIEWPORT */
 footer {
     font-size: 20px;
     text-align: center;
     padding: 20px;
-    background: none; /* Removes the background color */
+    background: none; 
     color: var(--text-color);
-    border-radius: 0; /* Removes the rounded corners */
+    border-radius: 0; 
     
-    position: fixed; /* Keeps the footer fixed at the bottom of the viewport */
+    /* CRITICAL: Ensures it stays fixed relative to the viewport */
+    position: fixed; 
     width: 100%;
     bottom: 0;
     z-index: 1000;
@@ -325,9 +322,10 @@ button:hover {
     transform: scale(1.05);
 }
 
-/* THEME TOGGLE ICON - FIXED POSITIONING (Unscrollable) */
+/* THEME TOGGLE ICON - LOCKED TO VIEWPORT */
 #theme-toggle {
-    position: fixed; /* Keeps the icon fixed at the top right of the viewport */
+    /* CRITICAL: Ensures it stays fixed relative to the viewport */
+    position: fixed; 
     top: 3px;
     right: 40px;
     background: none;
