@@ -17,8 +17,9 @@ router.get('/', async (req, res) => {
     const currentDate = new Date().toISOString();
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+    // Updated to use lowercase 'subscriptions'
     const query = `
-        SELECT * FROM "Subscriptions"
+        SELECT * FROM subscriptions
         WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
     `;
 
@@ -37,8 +38,9 @@ router.get('/', async (req, res) => {
             };
         });
 
+        // Updated to use lowercase 'notifications'
         const insertQuery = `
-            INSERT INTO "Notifications" (user_id, subscription_id, subscription_name, subscription_type, expiry, message, notified_at)
+            INSERT INTO notifications (user_id, subscription_id, subscription_name, subscription_type, expiry, message, notified_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
 
@@ -73,7 +75,8 @@ router.post('/store', async (req, res) => {
     }
 
     try {
-        const getExpiryQuery = `SELECT expiry FROM "Subscriptions" WHERE id = $1`;
+        // Updated to use lowercase 'subscriptions'
+        const getExpiryQuery = `SELECT expiry FROM subscriptions WHERE id = $1`;
         const row = await db.get(getExpiryQuery, [subscription_id]);
 
         if (!row) {
@@ -82,8 +85,9 @@ router.post('/store', async (req, res) => {
 
         const expiry = row.expiry;
 
+        // Updated to use lowercase 'notifications'
         const insertQuery = `
-            INSERT INTO "Notifications" (user_id, subscription_id, subscription_name, subscription_type, expiry, message, notified_at)
+            INSERT INTO notifications (user_id, subscription_id, subscription_name, subscription_type, expiry, message, notified_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
 

@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-const db = require('./database/connection');
+const db = require('./database/connection'); // Assuming this connects to your PostgreSQL DB
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const paymentRoutes = require('./routes/payments');
@@ -48,7 +48,7 @@ function createEmailTransporter() {
 // FIX 3: EXPORTED email sender function for use in the notifications router
 const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
     try {
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const userRow = await db.get('SELECT email FROM users WHERE id = $1', [userId]);
 
         if (!userRow) { return; }
@@ -66,7 +66,7 @@ const sendNotificationEmail = module.exports.sendNotificationEmail = async funct
 
         await transporter.sendMail(mailOptions);
 
-        // Cleaned template literal and execution with .trim()
+        // Correct Table Reference: sentemails
         const insertEmailQuery = `
 INSERT INTO sentemails (sender_email, receiver_email, subject, message, sent_at)
 VALUES ($1, $2, $3, $4, $5)
@@ -102,7 +102,7 @@ app.post('/forgot-password', async (req, res) => {
             return res.render('forgot-password', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const user = await db.get("SELECT * FROM users WHERE LOWER(email) = $1", [email.toLowerCase()]);
 
         if (!user) {
@@ -110,9 +110,10 @@ app.post('/forgot-password', async (req, res) => {
         }
 
         const token = crypto.randomBytes(20).toString('hex');
-        const expireTime = Date.now() + 3600000;
+        // `reset_token_expiry` is INTEGER (timestamp) in schema, using Date.now()
+        const expireTime = Date.now() + 3600000; 
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const updateQuery = "UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
         const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
 
@@ -165,7 +166,8 @@ app.post('/reset-password', async (req, res) => {
             return res.render('reset-password', { token, email, message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
+        // reset_token_expiry is INTEGER (timestamp) in schema, using Date.now()
         const user = await db.get("SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > $2", [token, Date.now()]);
 
         if (!user) {
@@ -174,7 +176,7 @@ app.post('/reset-password', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const updateQuery = "UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2";
         await db.run(updateQuery, [hashedPassword, user.id]);
 
@@ -210,7 +212,7 @@ app.post('/auth/signup', async (req, res) => {
             return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const existingUser = await db.get('SELECT id FROM users WHERE email = $1', [email]);
 
         if (existingUser) {
@@ -219,7 +221,7 @@ app.post('/auth/signup', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const insertQuery = 'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)';
         await db.run(insertQuery, [email, username, hashedPassword]);
 
@@ -249,7 +251,7 @@ app.post('/auth/login', async (req, res) => {
             return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Table name set to lowercase for PostgreSQL compatibility
+        // Correct Table Reference: users
         const user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -274,7 +276,7 @@ app.get('/transaction-history', async (req, res) => {
 
     const userId = req.session.user.id;
 
-    // Cleaned template literal and execution with .trim()
+    // Correct Table References: payments (p), payerdetails (pd)
     const sql = `
 SELECT
 p.payment_id, p.subscription_name, p.amount, p.currency,
@@ -302,7 +304,7 @@ app.get('/transaction-details/:paymentId', async (req, res) => {
     const paymentId = req.params.paymentId;
     const userId = req.session.user.id;
 
-    // Cleaned template literal and execution with .trim()
+    // Correct Table References: payments (p), payerdetails (pd)
     const sql = `
 SELECT
 p.payment_id, p.subscription_name, p.amount, p.currency,
@@ -342,7 +344,7 @@ app.use((req, res, next) => {
 
 app.get('/contact', async (req, res) => {
     try {
-        // Cleaned template literal
+        // Correct Table Reference: reviews
         const reviews = await db.all(
             'SELECT name, rating, review_text, created_at FROM reviews ORDER BY created_at DESC LIMIT 4'
         );
@@ -361,6 +363,7 @@ app.get('/contact', async (req, res) => {
 
 app.post('/submit-contact', async (req, res) => {
     const { name, email, message } = req.body;
+    // Correct Table Reference: contacts
     const query = `INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)`;
 
     try {
@@ -382,6 +385,7 @@ app.post('/submit-review', async (req, res) => {
 
     if (!email || !rating || !review_text) return res.redirect('/contact');
 
+    // Correct Table Reference: reviews
     const query = `INSERT INTO reviews (user_id, name, email, rating, review_text) VALUES ($1, $2, $3, $4, $5)`;
 
     try {
@@ -419,7 +423,7 @@ app.get('/dashboard', async (req, res) => {
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
 
     try {
-        // Cleaned template literal and execution with .trim()
+        // Correct Table Reference: subscriptions
         const subscriptionQuery = `
 SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
 FROM subscriptions
@@ -429,7 +433,7 @@ ORDER BY 1;
 `;
         subscriptionResults = await db.all(subscriptionQuery.trim(), [userId]);
 
-        // Cleaned template literal and execution with .trim()
+        // Correct Table Reference: payments
         const paymentQuery = `
 SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
 FROM payments
@@ -439,7 +443,7 @@ ORDER BY 1;
 `;
         paymentResults = await db.all(paymentQuery.trim(), [userId]);
 
-        // Cleaned template literal and execution with .trim()
+        // Correct Table Reference: payerdetails
         const payerQuery = `
 SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
 FROM payerdetails
@@ -471,7 +475,7 @@ app.get('/notifications', async (req, res) => {
     const currentDate = new Date().toISOString();
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Cleaned template literal and execution with .trim()
+    // Correct Table Reference: subscriptions
     const query = `
 SELECT * FROM subscriptions
 WHERE user_id = $1 AND expiry BETWEEN $2 AND $3

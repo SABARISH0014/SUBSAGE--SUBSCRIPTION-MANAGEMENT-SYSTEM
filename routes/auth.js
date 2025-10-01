@@ -12,7 +12,8 @@ router.post('/signup', async (req, res) => {
         return res.status(400).send('Email, username, and password are required.');
     }
 
-    const checkQuery = `SELECT * FROM "Users" WHERE username = $1 OR email = $2`;
+    // Updated to use lowercase 'users'
+    const checkQuery = `SELECT * FROM users WHERE username = $1 OR email = $2`;
 
     try {
         const existingUser = await db.get(checkQuery, [username, email]);
@@ -24,8 +25,8 @@ router.post('/signup', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Uses PostgreSQL placeholders $1, $2, $3
-        const insertQuery = `INSERT INTO "Users" (email, username, password) VALUES ($1, $2, $3)`;
+        // Updated to use lowercase 'users'
+        const insertQuery = `INSERT INTO users (email, username, password) VALUES ($1, $2, $3)`;
 
         await db.run(insertQuery, [email, username, hashedPassword]);
 
@@ -41,7 +42,8 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
-    const query = `SELECT * FROM "Users" WHERE username = $1`;
+    // Updated to use lowercase 'users'
+    const query = `SELECT * FROM users WHERE username = $1`;
 
     try {
         // ASYNC Call: Use await db.get to fetch user

@@ -13,8 +13,8 @@ router.get('/', async (req, res) => {
     }
 
     try {
-        // ASYNC Call: Fetch user data using $1
-        const user = await db.get('SELECT * FROM "Users" WHERE id = $1', [userId]);
+        // Updated to use lowercase 'users'
+        const user = await db.get('SELECT * FROM users WHERE id = $1', [userId]);
 
         if (!user) {
             return res.status(404).send('User not found.');
@@ -22,10 +22,10 @@ router.get('/', async (req, res) => {
 
         const subscriptionId = req.query.subscription_id;
         
-        // Define query and params using PostgreSQL placeholders ($1, $2)
+        // Updated to use lowercase 'subscriptions'
         const query = subscriptionId
-            ? 'SELECT * FROM "Subscriptions" WHERE id = $1 AND user_id = $2'
-            : 'SELECT * FROM "Subscriptions" WHERE user_id = $1';
+            ? 'SELECT * FROM subscriptions WHERE id = $1 AND user_id = $2'
+            : 'SELECT * FROM subscriptions WHERE user_id = $1';
         const params = subscriptionId ? [subscriptionId, userId] : [userId];
 
         // ASYNC Call: Fetch subscription data
@@ -72,9 +72,9 @@ router.post('/create-checkout-session', async (req, res) => {
     }
 
     try {
-        // ASYNC Call: Check if a successful payment exists for this subscription using $1
+        // Updated to use lowercase 'payments'
         const payments = await db.all(
-            `SELECT * FROM "Payments" WHERE subscription_id = $1 AND status = 'succeeded'`,
+            `SELECT * FROM payments WHERE subscription_id = $1 AND status = 'succeeded'`,
             [subscription_id]
         );
 
@@ -90,8 +90,8 @@ router.post('/create-checkout-session', async (req, res) => {
         }
 
         if (payment_type === 'extend') {
-            // ASYNC Call: Get subscription expiry date for extension check using $1
-            const subscription = await db.get('SELECT expiry FROM "Subscriptions" WHERE id = $1', [subscription_id]);
+            // Updated to use lowercase 'subscriptions'
+            const subscription = await db.get('SELECT expiry FROM subscriptions WHERE id = $1', [subscription_id]);
 
             if (!subscription) {
                 return res.status(404).send('Subscription not found.');
@@ -199,17 +199,17 @@ async function proceedWithPayment(sessionId) {
 
         const status = paymentDetails.status === 'succeeded' ? 'succeeded' : 'failed';
 
-        // ASYNC Call: Get subscription details using $1
-        const subscription = await db.get('SELECT * FROM "Subscriptions" WHERE id = $1', [subscriptionId]);
+        // Updated to use lowercase 'subscriptions'
+        const subscription = await db.get('SELECT * FROM subscriptions WHERE id = $1', [subscriptionId]);
 
         if (!subscription) {
             console.error(`Subscription not found for ID: ${subscriptionId}`);
             return;
         }
 
-        // Insert payment details using $1 to $11
+        // Updated to use lowercase 'payments'
         const insertPaymentSql = `
-            INSERT INTO "Payments" (payment_id, user_id, subscription_id, subscription_name, amount, currency, status, payment_type, payment_method, latest_charge, payment_intent_id)
+            INSERT INTO payments (payment_id, user_id, subscription_id, subscription_name, amount, currency, status, payment_type, payment_method, latest_charge, payment_intent_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `;
         await db.run(
@@ -229,9 +229,9 @@ async function proceedWithPayment(sessionId) {
             ]
         );
 
-        // Insert payer details using $1 to $5
+        // Updated to use lowercase 'payerdetails'
         const insertPayerDetailsSql = `
-            INSERT INTO "PayerDetails" (payment_id, user_id, payer_name, payer_email, address_country)
+            INSERT INTO payerdetails (payment_id, user_id, payer_name, payer_email, address_country)
             VALUES ($1, $2, $3, $4, $5)
         `;
         await db.run(
@@ -265,8 +265,9 @@ async function updateSubscriptionDates(subscription) {
         const newExpiryDate = new Date(newStartDate);
         newExpiryDate.setDate(newStartDate.getDate() + 30); // Extend by 30 days
 
+        // Updated to use lowercase 'subscriptions'
         const updateSubscriptionSql = `
-            UPDATE "Subscriptions" SET start = $1, expiry = $2 WHERE id = $3
+            UPDATE subscriptions SET start = $1, expiry = $2 WHERE id = $3
         `;
         await db.run(
             updateSubscriptionSql,

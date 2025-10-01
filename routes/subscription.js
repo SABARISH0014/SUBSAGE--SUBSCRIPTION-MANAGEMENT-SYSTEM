@@ -8,8 +8,8 @@ router.get('/manage-subscriptions', async (req, res) => {
         return res.redirect('/login');
     }
 
-    // Use PostgreSQL placeholder $1
-    const query = 'SELECT * FROM "Subscriptions" WHERE user_id = $1 ORDER BY expiry DESC';
+    // Updated to use lowercase 'subscriptions'
+    const query = 'SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY expiry DESC';
     
     try {
         // ASYNC Call: Use await db.all
@@ -25,8 +25,8 @@ router.get('/manage-subscriptions', async (req, res) => {
 
 // Route to render the update form (FIXED - ASYNC)
 router.get('/subscriptions/update/:id', async (req, res) => {
-    // Use PostgreSQL placeholder $1
-    const query = 'SELECT * FROM "Subscriptions" WHERE id = $1';
+    // Updated to use lowercase 'subscriptions'
+    const query = 'SELECT * FROM subscriptions WHERE id = $1';
 
     try {
         // ASYNC Call: Use await db.get
@@ -67,8 +67,8 @@ router.post('/subscriptions/update/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // SQL query to update the subscription. Uses $1 to $6.
-    const query = `UPDATE "Subscriptions" SET name = $1, type = $2, start = $3, expiry = $4, amount = $5 WHERE id = $6`;
+    // Updated to use lowercase 'subscriptions'
+    const query = `UPDATE subscriptions SET name = $1, type = $2, start = $3, expiry = $4, amount = $5 WHERE id = $6`;
 
     try {
         // ASYNC Call: Use await db.run
@@ -83,8 +83,8 @@ router.post('/subscriptions/update/:id', async (req, res) => {
 
 // Route to delete a subscription (FIXED - ASYNC)
 router.get('/subscriptions/delete/:id', async (req, res) => {
-    // Use PostgreSQL placeholder $1
-    const query = 'DELETE FROM "Subscriptions" WHERE id = $1';
+    // Updated to use lowercase 'subscriptions'
+    const query = 'DELETE FROM subscriptions WHERE id = $1';
 
     try {
         // ASYNC Call: Use await db.run
@@ -123,8 +123,8 @@ router.post('/add', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // SQL query to insert data. Uses $1 to $6.
-    const query = `INSERT INTO "Subscriptions" (user_id, name, type, start, expiry, amount) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+    // Updated to use lowercase 'subscriptions'
+    const query = `INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
 
     try {
         // ASYNC Call: Use await db.run
