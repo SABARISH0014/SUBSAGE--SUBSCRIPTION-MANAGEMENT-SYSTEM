@@ -124,8 +124,7 @@ body {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    /* FIX 1: Allow page scrolling */
-    overflow-y: auto; 
+    overflow-y: hidden;
     padding-bottom: 100px;
 }
 
@@ -141,8 +140,7 @@ body.dark-mode {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    /* FIX 1: Allow page scrolling */
-    overflow-y: auto; 
+    overflow-y: hidden;
     padding-bottom: 100px;
 }
 
@@ -152,9 +150,7 @@ body.dark-mode {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    /* FIX 2: Use min-height to allow content to push container size, enabling scroll */
-    min-height: 100vh; 
-    height: auto;
+    height: 100vh;
     padding: 20px; /* Ensures padding on smaller screens */
 }
 .g-recaptcha {
