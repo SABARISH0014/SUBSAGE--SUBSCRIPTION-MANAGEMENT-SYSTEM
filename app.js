@@ -399,14 +399,14 @@ app.post('/submit-review', async (req, res) => {
     }
 });
 
-app.get('/addSubscription', (req, res) => {
+app.get('/addsubscription', (req, res) => {
     if (!req.session.user) return res.redirect('/login');
 
     const user = req.session.user;
     const name = req.query.name || '';
     const type = req.query.type || '';
 
-    res.render('addSubscription', { user: user, name: name, type: type });
+    res.render('addsubscription', { user: user, name: name, type: type });
 });
 
 
