@@ -34,7 +34,7 @@ body.dark-mode {
     --form-input-border: #ccc;
 }
 
-/* Header Styles */
+/* Header Styles (Generic) */
 header {
     text-align: center;
     font-size: 25px;
@@ -58,7 +58,7 @@ body:not(.dark-mode) header h1 {
     color: var(--text-color); /* Default light mode text color */
 }
 
-/* Link Styles */
+/* Link Styles (Inside Form) */
 form a {
     color: var(--primary-color); /* Light blue in light mode */
     text-decoration: none;
@@ -168,13 +168,8 @@ body.dark-mode {
     margin-left: auto;
     margin-right: auto;
 }
-/* Header Styles */
-header {
-    text-align: center;
-    font-size: 25px;
-    color: #333;
-    margin: 20px 0; /* Add top and bottom margin */
-}
+/* Header Styles (Redundant definition removed, using the one above) */
+
 /* Header Logo Styles */
 header img {
     width: 60px; /* Adjust size as needed */
@@ -201,26 +196,10 @@ body.dark-mode header img {
 body.dark-mode header img:hover {
     filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced shadow on hover in dark mode */
 }
-/* Dark Mode Adjustments */
-body.dark-mode header h1 {
-    color: var(--text-color); /* Use dark mode text color */
-    text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.1); /* Adjust shadow for dark mode */
-}
+/* Dark Mode Adjustments (Redundant definition removed, using the one above) */
 
-/* Logo Image Styles */
-header img {
-    width: 50px; /* Adjust size as needed */
-    height: auto; /* Maintain aspect ratio */
-    position: absolute;
-    top: 37px; /* Adjust spacing from the top */
-    left: 20px; /* Adjust spacing from the left */
-    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth hover effect */
-}
+/* Logo Image Styles (Redundant definition removed, using the one above) */
 
-header img:hover {
-    transform: scale(1.1); /* Slightly enlarge the image */
-    opacity: 0.8; /* Slightly reduce opacity */
-}
 /* Account Creation Form */
 form {
     background: var(--card-bg);
@@ -232,7 +211,7 @@ form {
     transition: all 0.3s ease-in-out;
     box-sizing: border-box;
     text-align: center; /* Center content inside the form */
-    margin-top: -170px;
+    margin-top: -170px; /* Highly unusual positioning */
 }
 
 form h2 {
@@ -243,6 +222,14 @@ form h2 {
 }
 
 /* Form Fields */
+form label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
 form input {
     width: 100%;
     padding: 12px;
@@ -261,7 +248,7 @@ form input:focus {
 }
 
 /* Submit Button */
-form button {
+form button[type="submit"] {
     width: 100%;
     padding: 12px;
     font-size: 16px;
@@ -272,6 +259,7 @@ form button {
     border-radius: 25px;
     color: #fff;
     cursor: pointer;
+    /* Uses the existing button styles via the .btn class in HTML */
     background: var(--button-bg);
     transition: all 0.3s ease-in-out;
     margin-top: 10px;
@@ -289,6 +277,10 @@ p {
     font-size: 1rem;
     color: var(--text-color);
     transition: all 0.3s ease-in-out;
+    
+    /* === FIX: LAYER THE LINKS ABOVE FIXED ELEMENTS === */
+    position: relative; /* Must be relative, absolute, or fixed for z-index to work */
+    z-index: 1000; /* Ensures the link is clickable above the fixed footer */
 }
 
 p a {
@@ -316,7 +308,7 @@ footer {
     bottom: 0;
 }
 
-/* Button Styles */
+/* Button Styles (General - for theme toggle) */
 button {
     padding: 12px 25px;
     font-size: 16px;
@@ -345,6 +337,7 @@ button:hover {
     width: 40px;
     height: 40px;
     padding: 0;
+    z-index: 1010; /* Ensure theme toggle is also above the footer */
 }
 
 #theme-icon {
