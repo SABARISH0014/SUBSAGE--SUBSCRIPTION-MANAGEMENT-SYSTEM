@@ -6,11 +6,11 @@ const bcrypt = require('bcrypt');
 const db = require('./database/connection'); // Assuming this connects to your PostgreSQL DB
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-const paymentRoutes = require('./routes/payments');
-const flash = require('connect-flash');
+const flash = require('connect-flash'); 
 const crypto = require('crypto');
 
 // FIX 1: Consolidate ALL router imports at the top
+const paymentsRouter = require('./routes/payments'); 
 const notificationsRouter = require('./routes/notifications');
 const authRoutes = require('./routes/auth');
 const subscriptionRoutes = require('./routes/subscription');
@@ -32,7 +32,37 @@ app.use(session({
     cookie: { secure: false }
 }));
 
+// NEW: Initialize connect-flash middleware
+app.use(flash()); 
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// GLOBAL MIDDLEWARE: Check for authentication and redirect to login if missing
+const ensureAuthenticated = (req, res, next) => {
+    if (req.session.user) {
+        return next();
+    }
+    // Store the original URL to redirect the user back after successful login
+    req.session.redirectTo = req.originalUrl;
+    res.redirect('/login');
+};
+
+// GLOBAL MIDDLEWARE: Make flash messages and user info available to all templates
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    res.locals.successMessageContact = req.session.successMessageContact || null;
+    res.locals.successMessageReview = req.session.successMessageReview || null;
+    
+    // Clear custom session messages after use
+    delete req.session.successMessageContact;
+    delete req.session.successMessageReview;
+
+    // Use connect-flash for standard messages
+    res.locals.error = req.flash('error');
+    res.locals.success = req.flash('success');
+
+    next();
+});
 
 // FIX 2: Encapsulated transporter creation into a function to prevent startup crash
 function createEmailTransporter() {
@@ -82,7 +112,7 @@ VALUES ($1, $2, $3, $4, $5)
     }
 };
 
-// The following function definitions use logic integrated directly into the routes below.
+// --- AUTHENTICATION ROUTES (NON-ROUTER LOGIC: Password Reset) ---
 
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null });
@@ -189,158 +219,34 @@ app.post('/reset-password', async (req, res) => {
 });
 
 
+// --- ROUTER MOUNTING ---
 app.use('/auth', authRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/notifications', notificationsRouter);
+app.use('/payments', paymentsRouter);
 
+
+// --- PUBLIC ROUTES ---
 app.get('/', (req, res) => res.render('index'));
+
 app.get('/signup', (req, res) => {
-    res.render('signup', { message: null });
+    // Show flash message if available
+    res.render('signup', { message: req.flash('success') || null });
 });
 
-app.post('/auth/signup', async (req, res) => {
-    const { email, username, password, 'g-recaptcha-response': reCAPTCHAResponse } = req.body;
-
-    if (!reCAPTCHAResponse) return res.render('signup', { message: 'reCAPTCHA is required.' });
-
-    try {
-        const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
-        const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
-        });
-        if (!verificationResponse.data.success) {
-            return res.render('signup', { message: 'reCAPTCHA verification failed. Please try again.' });
-        }
-
-        // Correct Table Reference: users
-        const existingUser = await db.get('SELECT id FROM users WHERE email = $1', [email]);
-
-        if (existingUser) {
-            return res.render('signup', { message: 'User already exists.' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Correct Table Reference: users
-        const insertQuery = 'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)';
-        await db.run(insertQuery, [email, username, hashedPassword]);
-
-        return res.render('signup', { message: 'User registered successfully. You can now log in!' });
-
-    } catch (error) {
-        console.error('Error during sign up:', error);
-        res.render('signup', { message: 'An internal error occurred during sign up.' });
-    }
-});
+// REMOVED: app.post('/auth/signup', ...) - Now handled by authRoutes
 
 app.get('/login', (req, res) => {
-    res.render('login', { message: null });
+    // Show flash message if available
+    res.render('login', { message: req.flash('error') || req.flash('success') || null });
 });
 
-app.post('/auth/login', async (req, res) => {
-    const { username, password, 'g-recaptcha-response': reCAPTCHAResponse } = req.body;
-
-    if (!reCAPTCHAResponse) return res.render('login', { message: 'reCAPTCHA is required.' });
-
-    try {
-        const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
-        const verificationResponse = await axios.post(verificationUrl, null, {
-            params: { secret: process.env.RECAPTCHA_SECRET_KEY, response: reCAPTCHAResponse }
-        });
-        if (!verificationResponse.data.success) {
-            return res.render('login', { message: 'reCAPTCHA verification failed. Please try again.' });
-        }
-
-        // Correct Table Reference: users
-        const user = await db.get('SELECT * FROM users WHERE username = $1', [username]);
-
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.render('login', { message: 'Invalid username or password.' });
-        }
-
-        req.session.user = { id: user.id, username: user.username };
-
-        return res.redirect('/dashboard');
-
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.render('login', { message: 'An internal error occurred during login.' });
-    }
-});
-
-
-app.use('/payments', paymentRoutes);
-
-app.get('/transaction-history', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-
-    const userId = req.session.user.id;
-
-    // Correct Table References: payments (p), payerdetails (pd)
-    const sql = `
-SELECT
-p.payment_id, p.subscription_name, p.amount, p.currency,
-p.status, p.payment_method, p.payment_type, p.created_at,
-pd.payer_name, pd.payer_email
-FROM payments p
-LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
-WHERE p.user_id = $1
-ORDER BY p.created_at DESC
-`;
-
-    try {
-        const transactions = await db.all(sql.trim(), [userId]);
-
-        res.render('transaction-history', { transactions });
-    } catch (err) {
-        console.error("Error fetching transaction history:", err);
-        return res.status(500).send("Error loading transaction history");
-    }
-});
-
-app.get('/transaction-details/:paymentId', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-
-    const paymentId = req.params.paymentId;
-    const userId = req.session.user.id;
-
-    // Correct Table References: payments (p), payerdetails (pd)
-    const sql = `
-SELECT
-p.payment_id, p.subscription_name, p.amount, p.currency,
-p.status, p.payment_method, p.payment_type, p.created_at,
-pd.payer_name, pd.payer_email
-FROM payments p
-LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
-WHERE p.payment_id = $1 AND p.user_id = $2
-`;
-
-    try {
-        const transaction = await db.get(sql.trim(), [paymentId, userId]);
-
-        if (!transaction) {
-            return res.status(404).send("Transaction not found or unauthorized access");
-        }
-        res.render('transaction-details', { transaction });
-    } catch (err) {
-        console.error("Error fetching transaction details:", err);
-        return res.status(500).send("Error loading transaction details");
-    }
-});
+// REMOVED: app.post('/auth/login', ...) - Now handled by authRoutes
 
 
 app.get('/entertainment', (req, res) => res.render('entertainment'));
 app.get('/utilities', (req, res) => res.render('utilities'));
 
-app.use((req, res, next) => {
-    res.locals.successMessageContact = req.session.successMessageContact || null;
-    res.locals.successMessageReview = req.session.successMessageReview || null;
-
-    delete req.session.successMessageContact;
-    delete req.session.successMessageReview;
-
-    next();
-});
 
 app.get('/contact', async (req, res) => {
     try {
@@ -378,7 +284,8 @@ app.post('/submit-contact', async (req, res) => {
 });
 
 app.post('/submit-review', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/contact');
+    // Authentication Check: User must be logged in to submit a review
+    if (!req.session.user) return res.redirect('/contact'); 
 
     const { id: userId } = req.session.user;
     const { name, email, rating, review_text } = req.body;
@@ -399,56 +306,95 @@ app.post('/submit-review', async (req, res) => {
     }
 });
 
-app.get('/addsubscription', (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
+// --- PROTECTED ROUTES (Using ensureAuthenticated middleware) ---
 
-    const user = req.session.user;
-    const name = req.query.name || '';
-    const type = req.query.type || '';
+app.get('/transaction-history', ensureAuthenticated, async (req, res) => {
+    const userId = req.session.user.id;
+    
+    // Correct Table References: payments (p), payerdetails (pd)
+    const sql = `
+    SELECT
+    p.payment_id, p.subscription_name, p.amount, p.currency,
+    p.status, p.payment_method, p.payment_type, p.created_at,
+    pd.payer_name, pd.payer_email
+    FROM payments p
+    LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
+    WHERE p.user_id = $1
+    ORDER BY p.created_at DESC
+    `;
 
-    res.render('addsubscription', { user: user, name: name, type: type });
+    try {
+        const transactions = await db.all(sql.trim(), [userId]);
+
+        res.render('transaction-history', { transactions });
+    } catch (err) {
+        console.error("Error fetching transaction history:", err);
+        return res.status(500).send("Error loading transaction history");
+    }
 });
 
+app.get('/transaction-details/:paymentId', ensureAuthenticated, async (req, res) => {
+    const paymentId = req.params.paymentId;
+    const userId = req.session.user.id;
 
-app.get('/add-subscription', (req, res) => {
-    const name = req.query.name || '';
-    res.render('addSubscription', { name: name });
+    // Correct Table References: payments (p), payerdetails (pd)
+    const sql = `
+    SELECT
+    p.payment_id, p.subscription_name, p.amount, p.currency,
+    p.status, p.payment_method, p.payment_type, p.created_at,
+    pd.payer_name, pd.payer_email
+    FROM payments p
+    LEFT JOIN payerdetails pd ON p.payment_id = pd.payment_id
+    WHERE p.payment_id = $1 AND p.user_id = $2
+    `;
+
+    try {
+        const transaction = await db.get(sql.trim(), [paymentId, userId]);
+
+        if (!transaction) {
+            return res.status(404).send("Transaction not found or unauthorized access");
+        }
+        res.render('transaction-details', { transaction });
+    } catch (err) {
+        console.error("Error fetching transaction details:", err);
+        return res.status(500).send("Error loading transaction details");
+    }
 });
 
+// Removed conflicting subscription routes, assuming subscriptionRoutes.js handles:
+// app.get('/addsubscription', ensureAuthenticated, ...)
 
-app.get('/dashboard', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-
+app.get('/dashboard', ensureAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
 
     try {
         // Correct Table Reference: subscriptions
         const subscriptionQuery = `
-SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
-FROM subscriptions
-WHERE user_id = $1
-GROUP BY 1, 2
-ORDER BY 1;
-`;
+        SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
+        FROM subscriptions
+        WHERE user_id = $1
+        GROUP BY 1, 2
+        ORDER BY 1;
+        `;
         subscriptionResults = await db.all(subscriptionQuery.trim(), [userId]);
 
         // Correct Table Reference: payments
         const paymentQuery = `
-SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
-FROM payments
-WHERE user_id = $1
-GROUP BY 1, 2
-ORDER BY 1;
-`;
+        SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
+        FROM payments
+        WHERE user_id = $1
+        GROUP BY 1, 2
+        ORDER BY 1;
+        `;
         paymentResults = await db.all(paymentQuery.trim(), [userId]);
 
         // Correct Table Reference: payerdetails
         const payerQuery = `
-SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
-FROM payerdetails
-WHERE user_id = $1;
-`;
+        SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
+        FROM payerdetails
+        WHERE user_id = $1;
+        `;
         const result = await db.get(payerQuery.trim(), [userId]);
         payerResults = result;
 
@@ -459,7 +405,8 @@ WHERE user_id = $1;
 
     res.render('dashboard', {
         username: req.session.user.username,
-        message: req.session.message,
+        // The previous message logic was simplified, keeping only one way to pass messages (flash or session)
+        message: req.session.message, 
         subscriptionData: subscriptionResults,
         paymentData: paymentResults,
         uniquePayers: payerResults ? payerResults.uniquePayers : 0
@@ -468,18 +415,16 @@ WHERE user_id = $1;
     req.session.message = null;
 });
 
-app.get('/notifications', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-
+app.get('/notifications', ensureAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
     const currentDate = new Date().toISOString();
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Correct Table Reference: subscriptions
     const query = `
-SELECT * FROM subscriptions
-WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
-`;
+    SELECT * FROM subscriptions
+    WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
+    `;
 
     try {
         const subscriptions = await db.all(query.trim(), [userId, currentDate, nextWeekDate]);
@@ -500,9 +445,6 @@ WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
     }
 });
 
-app.use('/auth', authRoutes);
-app.use('/subscriptions', subscriptionRoutes);
-app.use('/notifications', notificationsRouter);
 
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
