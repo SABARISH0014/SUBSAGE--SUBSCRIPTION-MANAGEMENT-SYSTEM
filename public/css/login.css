@@ -141,7 +141,7 @@ body.dark-mode {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    overflow-y: auto; 
+    overflow-y: hidden; 
     padding-bottom: 100px;
 }
 
