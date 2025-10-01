@@ -193,7 +193,8 @@ header img:hover {
 
 /* Dark Mode Header Logo Styles */
 body.dark-mode header img {
-    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3)); /* Adjust shadow for dark mode */
+    filter: drop-shadow(2px 2px 5px rgba(255, 255, 255, 0.3));
+    position: absolute; /* Adjust shadow for dark mode */
 }
 
 /* Dark Mode Hover Effect for Header Logo */
@@ -307,7 +308,7 @@ footer {
     background: none; /* Removes the background color */
     color: var(--text-color);
     border-radius: 0; /* Removes the rounded corners */
-    position: fixed;
+    position: absolute;
     width: 100%;
     bottom: 0;
 }
