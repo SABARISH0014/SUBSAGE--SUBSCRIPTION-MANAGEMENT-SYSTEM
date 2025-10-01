@@ -112,6 +112,7 @@ body.dark-mode form .btn.login {
 }
 
 /* General Styles */
+/* Light Mode Background */
 body {
     font-family: 'Arial', sans-serif;
     background-image: url('/images/login-bg.png'); /* Light mode background image */
@@ -123,9 +124,8 @@ body {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    /* Keeps content scrollable */
+    /* FIX 1: Allow page scrolling */
     overflow-y: auto; 
-    /* Provides space for the fixed footer at the bottom of the scroll */
     padding-bottom: 100px;
 }
 
@@ -141,7 +141,8 @@ body.dark-mode {
     line-height: 1.6;
     transition: all 0.3s ease-in-out;
     min-height: 100vh;
-    overflow-y: hidden; 
+    /* FIX 1: Allow page scrolling */
+    overflow-y: auto; 
     padding-bottom: 100px;
 }
 
@@ -151,6 +152,7 @@ body.dark-mode {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    /* FIX 2: Use min-height to allow content to push container size, enabling scroll */
     min-height: 100vh; 
     height: auto;
     padding: 20px; /* Ensures padding on smaller screens */
@@ -158,7 +160,7 @@ body.dark-mode {
 .g-recaptcha {
     margin-top: 10px;
     display: inline-block;
-    transform: scale(1.1); /* Optional: adjust reCAPTCHA size */
+    transform: scale(1.1);  /* Optional: adjust reCAPTCHA size */
 }
 #error-message {
     color: red;
@@ -170,6 +172,7 @@ body.dark-mode {
     margin-left: auto;
     margin-right: auto;
 }
+/* Header Styles (Redundant definition removed, using the one above) */
 
 /* Header Logo Styles */
 header img {
@@ -197,6 +200,9 @@ body.dark-mode header img {
 body.dark-mode header img:hover {
     filter: drop-shadow(4px 4px 8px rgba(255, 255, 255, 0.5)); /* Enhanced shadow on hover in dark mode */
 }
+/* Dark Mode Adjustments (Redundant definition removed, using the one above) */
+
+/* Logo Image Styles (Redundant definition removed, using the one above) */
 
 /* Account Creation Form */
 form {
@@ -209,7 +215,7 @@ form {
     transition: all 0.3s ease-in-out;
     box-sizing: border-box;
     text-align: center; /* Center content inside the form */
-    margin-top: -170px; /* Highly unusual positioning, but kept as is for now */
+    margin-top: -170px; /* Highly unusual positioning */
 }
 
 form h2 {
@@ -257,6 +263,7 @@ form button[type="submit"] {
     border-radius: 25px;
     color: #fff;
     cursor: pointer;
+    /* Uses the existing button styles via the .btn class in HTML */
     background: var(--button-bg);
     transition: all 0.3s ease-in-out;
     margin-top: 10px;
@@ -268,12 +275,16 @@ form button:hover {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Additional Styles for links (includes 'forget password' link) */
+/* Additional Styles for Create new account and Sign in */
 p {
     margin-top: 20px;
     font-size: 1rem;
     color: var(--text-color);
     transition: all 0.3s ease-in-out;
+    
+    /* === FIX: LAYER THE LINKS ABOVE FIXED ELEMENTS === */
+    position: relative; /* Must be relative, absolute, or fixed for z-index to work */
+    z-index: 1000; /* Ensures the link is clickable above the fixed footer */
 }
 
 p a {
@@ -288,20 +299,17 @@ p a:hover {
     text-decoration: underline;
 }
 
-/* FOOTER - LOCKED TO VIEWPORT */
+/* Footer Text */
 footer {
     font-size: 20px;
     text-align: center;
     padding: 20px;
-    background: none; 
+    background: none; /* Removes the background color */
     color: var(--text-color);
-    border-radius: 0; 
-    
-    /* CRITICAL: Ensures it stays fixed relative to the viewport */
-    position: fixed; 
+    border-radius: 0; /* Removes the rounded corners */
+    position: fixed;
     width: 100%;
     bottom: 0;
-    z-index: 1000;
 }
 
 /* Button Styles (General - for theme toggle) */
@@ -322,10 +330,9 @@ button:hover {
     transform: scale(1.05);
 }
 
-/* THEME TOGGLE ICON - LOCKED TO VIEWPORT */
+/* Theme Icon Styles */
 #theme-toggle {
-    /* CRITICAL: Ensures it stays fixed relative to the viewport */
-    position: fixed; 
+    position: fixed;
     top: 3px;
     right: 40px;
     background: none;
@@ -334,7 +341,7 @@ button:hover {
     width: 40px;
     height: 40px;
     padding: 0;
-    z-index: 1010; 
+    z-index: 1010; /* Ensure theme toggle is also above the footer */
 }
 
 #theme-icon {
