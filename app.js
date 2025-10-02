@@ -9,10 +9,10 @@ const nodemailer = require('nodemailer');
 const flash = require('connect-flash'); 
 const crypto = require('crypto');
 
-// --- CRITICAL UTILITY IMPORTS (Ensuring stability and compatibility) ---
-// This middleware is used to protect routes in app.js and your routers (e.g., subscriptionRoutes.js)
+// --- UTILITY IMPORTS (Required for stability and modularity) ---
+// Middleware to protect routes (used in app.js and subscriptionRoutes.js)
 const { ensureAuthenticated } = require('./utils/authUtils');
-// This function is needed for the password reset logic
+// Function needed for password reset email logic
 const { createEmailTransporter } = require('./utils/email'); 
 
 // FIX 1: Consolidate ALL router imports at the top
@@ -25,7 +25,7 @@ const subscriptionRoutes = require('./routes/subscription');
 const app = express();
 const PORT = 3000;
 
-// CRITICAL FIX 1: Trust the proxy headers (essential for Vercel/HTTPS deployment)
+// CRITICAL FIX 1: Trust the proxy headers (required for Vercel/HTTPS deployment)
 app.set('trust proxy', 1);
 
 app.use(express.json());
@@ -38,9 +38,9 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { 
-        // CRITICAL FIX 2: Set secure to true since your deployment (Vercel) uses HTTPS
+        // CRITICAL FIX 2: Set secure to true because your deployment uses HTTPS
         secure: true, 
-        // CRITICAL FIX 3: Add SameSite to improve security and browser compatibility
+        // CRITICAL FIX 3: Add SameSite for improved security and modern browser compatibility
         sameSite: 'lax' 
     }
 }));
@@ -207,8 +207,6 @@ app.get('/utilities', (req, res) => res.render('utilities'));
 
 app.get('/contact', async (req, res) => {
     try {
-        // NOTE: Contact page is generally public, but accessing reviews shouldn't require login.
-        // If posting a review requires login, use ensureAuthenticated on the POST route.
         
         // Correct Table Reference: reviews
         const reviews = await db.all(
