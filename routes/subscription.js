@@ -11,7 +11,8 @@ router.get('/add', ensureAuthenticated, (req, res) => {
     const name = req.query.name || '';
     const type = req.query.type || '';
 
-    // CRITICAL FIX: Changed view name to lowercase 'addsubscription' for consistency
+    // CRITICAL FIX: Ensure the view name is lowercase 'addsubscription'
+    // to prevent case-sensitivity issues on deployment servers.
     res.render('addsubscription', { 
         user: req.session.user, 
         name: name, 
@@ -28,6 +29,7 @@ router.get('/manage-subscriptions', ensureAuthenticated, async (req, res) => {
     try {
         const subscriptions = await db.all(query, [req.session.user.id]);
         
+        // Ensure the view name is lowercase
         res.render('manage-subscriptions', { subscriptions: subscriptions });
     } catch (err) {
         console.error('Error fetching subscriptions:', err);
@@ -48,6 +50,7 @@ router.get('/update/:id', ensureAuthenticated, async (req, res) => {
             return res.status(404).send('Subscription not found');
         }
 
+        // Ensure the view name is lowercase
         res.render('update-subscription', {
             subscription: subscription,
             category: subscription.type 
@@ -126,8 +129,7 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // CRITICAL FIX: Removed 'status' column from the query to match schema
-    // The query now only inserts into existing columns (user_id, name, type, start, expiry, amount)
+    // Removed 'status' column from the query to match schema
     const query = `
         INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) 
         VALUES ($1, $2, $3, $4, $5, $6) 
@@ -135,7 +137,6 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
     `;
 
     try {
-        // Run the query without the status parameter
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
         res.json({
@@ -145,7 +146,6 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         });
     } catch (err) {
         console.error('Error adding subscription:', err);
-        // If an error still occurs, we send the message back to the client.
         return res.status(500).json({ success: false, message: 'Database error: Could not add subscription.' });
     }
 });
