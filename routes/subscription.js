@@ -112,7 +112,6 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
 
     if (!user_id || !name || !type || !start || !expiry || !amount) {
         console.log('Missing required fields');
-        // Use status(400).json() instead of just json()
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
@@ -130,21 +129,26 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // Removed 'status' column from the query to match schema
     const query = `
         INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) 
         VALUES ($1, $2, $3, $4, $5, $6) 
         RETURNING id
     `;
 
+    let subscriptionId = null;
+
     try {
+        // This assignment ensures db.run promise fully resolves and captures the data.
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
-        // Ensure success response always sends 200 OK status with JSON
+        // Safely extract the ID
+        subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
+        
+        // Send JSON response
         res.status(200).json({
             success: true,
             message: 'Subscription added successfully',
-            id: result && result.rows && result.rows[0] ? result.rows[0].id : null
+            id: subscriptionId
         });
     } catch (err) {
         console.error('Error adding subscription:', err);
