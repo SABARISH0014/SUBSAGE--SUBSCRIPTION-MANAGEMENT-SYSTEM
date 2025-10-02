@@ -126,9 +126,16 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    const query = `INSERT INTO subscriptions (user_id, name, type, start, expiry, amount, status) VALUES ($1, $2, $3, $4, $5, $6, 'Active') RETURNING id`;
+    // CRITICAL FIX: Removed 'status' column from the query to match schema
+    // The query now only inserts into existing columns (user_id, name, type, start, expiry, amount)
+    const query = `
+        INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) 
+        VALUES ($1, $2, $3, $4, $5, $6) 
+        RETURNING id
+    `;
 
     try {
+        // Run the query without the status parameter
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
         res.json({
@@ -138,7 +145,8 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         });
     } catch (err) {
         console.error('Error adding subscription:', err);
-        return res.status(500).json({ success: false, message: 'Error adding subscription' });
+        // If an error still occurs, we send the message back to the client.
+        return res.status(500).json({ success: false, message: 'Database error: Could not add subscription.' });
     }
 });
 
