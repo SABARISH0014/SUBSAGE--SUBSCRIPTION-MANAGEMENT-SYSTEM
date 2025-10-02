@@ -2,8 +2,25 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database/connection'); // Assumes db exports async functions
 
-// CRITICAL FIX: Update path to import middleware from the utils folder
+// CRITICAL FIX: Update path to import middleware from utils/authUtils.js
+// Path is relative to the router file, so '..' goes up to the root, then into 'utils'
 const { ensureAuthenticated } = require('../utils/authUtils'); 
+
+
+// --- GET Handler for the "Add Subscription" Page ---
+// Path: /subscriptions/add
+router.get('/add', ensureAuthenticated, (req, res) => {
+    // Middleware 'ensureAuthenticated' guarantees req.session.user exists
+    const name = req.query.name || '';
+    const type = req.query.type || '';
+
+    // Renders the view views/addSubscription.ejs
+    res.render('addSubscription', { 
+        user: req.session.user, 
+        name: name, 
+        type: type 
+    });
+});
 
 
 // Route to fetch all subscriptions for the logged-in user 
@@ -15,7 +32,6 @@ router.get('/manage-subscriptions', ensureAuthenticated, async (req, res) => {
     try {
         const subscriptions = await db.all(query, [req.session.user.id]);
         
-        // Render the manage-subscriptions.ejs view with subscription data
         res.render('manage-subscriptions', { subscriptions: subscriptions });
     } catch (err) {
         console.error('Error fetching subscriptions:', err);
@@ -69,7 +85,6 @@ router.post('/update/:id', ensureAuthenticated, async (req, res) => {
     try {
         await db.run(query, [name, type, start, expiry, numericAmount, req.params.id]);
 
-        // Redirect path should be the full path under the mount point
         res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error updating subscription:', err);
@@ -84,7 +99,6 @@ router.get('/delete/:id', ensureAuthenticated, async (req, res) => {
     try {
         await db.run(query, [req.params.id]);
 
-        // Redirect path should be the full path under the mount point
         res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error deleting subscription:', err);
@@ -94,17 +108,14 @@ router.get('/delete/:id', ensureAuthenticated, async (req, res) => {
 
 // POST request to add a subscription (Path: /subscriptions/add)
 router.post('/add', ensureAuthenticated, async (req, res) => {
-    // FIX: Use user ID from session for safety, ignoring/overwriting body.user_id
     const user_id = req.session.user.id;
     const { name, type, start, expiry, amount } = req.body;
 
-    // Validate that all required fields are provided
     if (!user_id || !name || !type || !start || !expiry || !amount) {
         console.log('Missing required fields');
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    // Ensure the start and expiry dates are valid
     const startDate = new Date(start);
     const expiryDate = new Date(expiry);
     const numericAmount = parseFloat(amount);
@@ -114,7 +125,6 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid date format' });
     }
 
-    // Ensure amount is a positive number
     if (isNaN(numericAmount) || numericAmount <= 0) {
         console.log('Invalid amount');
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
