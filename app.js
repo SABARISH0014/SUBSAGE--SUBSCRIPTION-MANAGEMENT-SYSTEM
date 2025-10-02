@@ -25,6 +25,8 @@ const subscriptionRoutes = require('./routes/subscription');
 const app = express();
 const PORT = 3000;
 
+// CRITICAL FIX 1: Trust the proxy headers (essential for Vercel/HTTPS deployment)
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,7 +37,12 @@ app.use(session({
     secret: 'your-secret-key',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { 
+        // CRITICAL FIX 2: Set secure to true since your deployment (Vercel) uses HTTPS
+        secure: true, 
+        // CRITICAL FIX 3: Add SameSite to improve security and browser compatibility
+        sameSite: 'lax' 
+    }
 }));
 
 // NEW: Initialize connect-flash middleware
