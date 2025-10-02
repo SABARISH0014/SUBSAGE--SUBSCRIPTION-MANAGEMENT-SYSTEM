@@ -138,12 +138,13 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
     `;
 
     try {
-        // Ensure the promise resolves and no implicit response is sent by db.run
+        // --- FINAL ATTEMPT FIX: ISOLATE DATABASE RESPONSE ---
+        // 1. Run the query and capture the result
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
         const subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
         
-        // Final Fix: Send JSON response and RETURN immediately, guaranteeing no fall-through
+        // 2. Explicitly return JSON
         return res.status(200).json({
             success: true,
             message: 'Subscription added successfully',
@@ -151,7 +152,7 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         });
     } catch (err) {
         console.error('Error adding subscription:', err);
-        // Send JSON error response and RETURN immediately
+        // Ensure error response sends 500 status with JSON
         return res.status(500).json({ success: false, message: 'Database error: Could not add subscription.' });
     }
 });
