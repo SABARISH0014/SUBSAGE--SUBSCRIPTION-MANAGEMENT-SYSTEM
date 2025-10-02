@@ -13,7 +13,7 @@ router.get('/add', ensureAuthenticated, (req, res) => {
 
     // CRITICAL FIX: Ensure the view name is lowercase 'addsubscription'
     // to prevent case-sensitivity issues on deployment servers.
-    res.render('addsubscription', { 
+    return res.render('addsubscription', { 
         user: req.session.user, 
         name: name, 
         type: type 
@@ -30,7 +30,7 @@ router.get('/manage-subscriptions', ensureAuthenticated, async (req, res) => {
         const subscriptions = await db.all(query, [req.session.user.id]);
         
         // Ensure the view name is lowercase
-        res.render('manage-subscriptions', { subscriptions: subscriptions });
+        return res.render('manage-subscriptions', { subscriptions: subscriptions });
     } catch (err) {
         console.error('Error fetching subscriptions:', err);
         return res.status(500).send('Error fetching subscriptions');
@@ -51,7 +51,7 @@ router.get('/update/:id', ensureAuthenticated, async (req, res) => {
         }
 
         // Ensure the view name is lowercase
-        res.render('update-subscription', {
+        return res.render('update-subscription', {
             subscription: subscription,
             category: subscription.type 
         });
@@ -84,7 +84,7 @@ router.post('/update/:id', ensureAuthenticated, async (req, res) => {
     try {
         await db.run(query, [name, type, start, expiry, numericAmount, req.params.id]);
 
-        res.redirect('/subscriptions/manage-subscriptions'); 
+        return res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error updating subscription:', err);
         return res.status(500).send('Error updating subscription');
@@ -98,7 +98,7 @@ router.get('/delete/:id', ensureAuthenticated, async (req, res) => {
     try {
         await db.run(query, [req.params.id]);
 
-        res.redirect('/subscriptions/manage-subscriptions'); 
+        return res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error deleting subscription:', err);
         return res.status(500).send('Error deleting subscription');
@@ -143,7 +143,7 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         
         const subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
         
-        // Send JSON response and RETURN immediately
+        // Final Fix: Send JSON response and RETURN immediately, guaranteeing no fall-through
         return res.status(200).json({
             success: true,
             message: 'Subscription added successfully',
