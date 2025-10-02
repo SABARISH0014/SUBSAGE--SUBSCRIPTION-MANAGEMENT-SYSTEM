@@ -110,6 +110,7 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
     const user_id = req.session.user.id;
     const { name, type, start, expiry, amount } = req.body;
 
+    // --- Validation Checks with early exit ---
     if (!user_id || !name || !type || !start || !expiry || !amount) {
         console.log('Missing required fields');
         return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -128,6 +129,7 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         console.log('Invalid amount');
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
+    // ----------------------------------------
 
     const query = `
         INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) 
@@ -135,24 +137,21 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
         RETURNING id
     `;
 
-    let subscriptionId = null;
-
     try {
-        // This assignment ensures db.run promise fully resolves and captures the data.
+        // Ensure the promise resolves and no implicit response is sent by db.run
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
-        // Safely extract the ID
-        subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
+        const subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
         
-        // Send JSON response
-        res.status(200).json({
+        // Send JSON response and RETURN immediately
+        return res.status(200).json({
             success: true,
             message: 'Subscription added successfully',
             id: subscriptionId
         });
     } catch (err) {
         console.error('Error adding subscription:', err);
-        // Ensure error response sends 500 status with JSON
+        // Send JSON error response and RETURN immediately
         return res.status(500).json({ success: false, message: 'Database error: Could not add subscription.' });
     }
 });
