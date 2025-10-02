@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Subscription - SubSage</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/addsubscription.css">
     <link rel="icon" type="image/png" sizes="256x256" href="/images/website icon.ico">
 </head>
 <body>
@@ -19,7 +19,9 @@
     </header>
     
     <main class="container">
+        <div id="message-container"></div>
         <form id="subscription-form">
+            <!-- Ensure user object exists before accessing id to prevent EJS rendering errors -->
             <input type="hidden" id="user-id" value="<%= user ? user.id : '' %>">
             
             <label for="name">Subscription Name</label>
@@ -62,13 +64,14 @@
 
     <script>
         // Placeholder function to replace alert()
-        function displayMessage(message) {
-            console.warn("UI Notification:", message);
-            // Implement your custom notification modal/toast here
+        function displayMessage(message, type = 'error') {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => { container.innerHTML = ''; }, 5000);
         }
 
         document.getElementById('subscription-form').addEventListener('submit', function (e) {
-            e.preventDefault(); // Prevent the default form submission
+            e.preventDefault();
 
             // Collect form data
             const name = document.getElementById('name').value;
@@ -76,7 +79,7 @@
             const start = document.getElementById('start').value;
             const expiry = document.getElementById('expiry').value;
             const amount = document.getElementById('amount').value;
-            const userId = document.getElementById('user-id').value; // Hidden input field
+            const userId = document.getElementById('user-id').value;
 
             // Validate required fields
             if (!userId || !name || !type || !start || !expiry || !amount || isNaN(amount)) {
@@ -84,7 +87,6 @@
                 return;
             }
 
-            // Prepare the subscription data object
             const subscriptionData = {
                 user_id: userId,
                 name,
@@ -94,22 +96,13 @@
                 amount: parseFloat(amount).toFixed(2),
             };
 
-            // Submit button feedback
             const submitButton = document.querySelector('#submit-button');
-            if (!submitButton) {
-                console.error("Submit button not found");
-                return;
-            }
-
             submitButton.disabled = true;
             submitButton.textContent = 'Submitting...';
 
-            // Send data to the server using fetch
             fetch('/subscriptions/add', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(subscriptionData),
             })
             .then((response) => response.json())
@@ -117,9 +110,8 @@
                 submitButton.disabled = false;
                 submitButton.textContent = 'Add Subscription';
                 if (data.success) {
-                    displayMessage('Subscription added successfully! Redirecting to dashboard...');
-                    document.getElementById('subscription-form').reset(); // Clear the form
-                    // You might want to redirect here: window.location.href = '/dashboard';
+                    displayMessage('Subscription added successfully!', 'success');
+                    document.getElementById('subscription-form').reset();
                 } else {
                     displayMessage('Error adding subscription: ' + (data.message || 'Unknown error'));
                 }
@@ -127,8 +119,8 @@
             .catch((error) => {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Add Subscription';
-                console.error('Error:', error);
-                displayMessage('Error adding subscription');
+                console.error('Fetch Error:', error);
+                displayMessage('Network error occurred.');
             });
         });
 
@@ -137,7 +129,6 @@
         const themeIcon = document.getElementById('theme-icon');
         const body = document.body;
 
-        // Apply the stored theme preference on load
         const storedTheme = localStorage.getItem('theme') || 'light';
         if (storedTheme === 'dark') {
             body.classList.add('dark-mode');
@@ -149,7 +140,6 @@
             themeIcon.alt = 'Switch to dark mode';
         }
 
-        // Toggle theme on button click
         themeToggleBtn.addEventListener('click', () => {
             body.classList.toggle('dark-mode');
             if (body.classList.contains('dark-mode')) {
@@ -163,25 +153,14 @@
             }
         });
 
-        window.addEventListener('scroll', function() {
-            // If the page is scrolled down, add the class "scrolled"
-            if (window.scrollY > 100) {
-                body.classList.add('scrolled');
-            } else {
-                body.classList.remove('scrolled');
-            }
-        });
-
         document.getElementById('name').addEventListener('change', function() {
             const name = this.value;
             const typeSelect = document.getElementById('type');
         
-            // Set 'Entertainment' as the default for specific subscriptions
             const entertainmentSubscriptions = [
                 'amazon_prime', 'netflix', 'disney_plus', 'spotify'
             ];
         
-            // If the selected subscription is one of the entertainment options
             if (entertainmentSubscriptions.includes(name)) {
                 typeSelect.value = 'entertainment';
             } else {
