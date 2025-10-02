@@ -3,19 +3,16 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-const db = require('./database/connection'); // Assuming this connects to your PostgreSQL DB
+const db = require('./database/connection'); 
 const axios = require('axios');
 const nodemailer = require('nodemailer'); 
 const flash = require('connect-flash'); 
 const crypto = require('crypto');
 
-// --- UTILITY IMPORTS (Required for stability and modularity) ---
-// Middleware to protect routes (used in app.js and subscriptionRoutes.js)
+// --- UTILITY IMPORTS ---
 const { ensureAuthenticated } = require('./utils/authUtils');
-// Function needed for password reset email logic
 const { createEmailTransporter } = require('./utils/email'); 
 
-// FIX 1: Consolidate ALL router imports at the top
 const paymentsRouter = require('./routes/payments'); 
 const notificationsRouter = require('./routes/notifications');
 const authRoutes = require('./routes/auth');
@@ -25,7 +22,7 @@ const subscriptionRoutes = require('./routes/subscription');
 const app = express();
 const PORT = 3000;
 
-// CRITICAL FIX 1: Trust the proxy headers (required for Vercel/HTTPS deployment)
+// CRITICAL FIX 1: Trust the proxy headers (MANDATORY for Vercel/HTTPS deployment)
 app.set('trust proxy', 1);
 
 app.use(express.json());
@@ -40,14 +37,12 @@ app.use(session({
     cookie: { 
         // CRITICAL FIX 2: Set secure to true because your deployment uses HTTPS
         secure: true, 
-        // CRITICAL FIX 3: Add SameSite for improved security and modern browser compatibility
+        // CRITICAL FIX 3: Add SameSite for security and compatibility
         sameSite: 'lax' 
     }
 }));
 
-// NEW: Initialize connect-flash middleware
 app.use(flash()); 
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 
@@ -57,20 +52,14 @@ app.use((req, res, next) => {
     res.locals.successMessageContact = req.session.successMessageContact || null;
     res.locals.successMessageReview = req.session.successMessageReview || null;
     
-    // Clear custom session messages after use
     delete req.session.successMessageContact;
     delete req.session.successMessageReview;
 
-    // Use connect-flash for standard messages
     res.locals.error = req.flash('error');
     res.locals.success = req.flash('success');
 
     next();
 });
-
-// REMOVED: Inlined createEmailTransporter and sendNotificationEmail functions.
-// They are now defined in utils/email.js and imported as needed.
-
 
 // --- AUTHENTICATION ROUTES (NON-ROUTER LOGIC: Password Reset) ---
 
@@ -92,7 +81,6 @@ app.post('/forgot-password', async (req, res) => {
             return res.render('forgot-password', { message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Correct Table Reference: users
         const user = await db.get("SELECT * FROM users WHERE LOWER(email) = $1", [email.toLowerCase()]);
 
         if (!user) {
@@ -100,10 +88,8 @@ app.post('/forgot-password', async (req, res) => {
         }
 
         const token = crypto.randomBytes(20).toString('hex');
-        // `reset_token_expiry` is INTEGER (timestamp) in schema, using Date.now()
         const expireTime = Date.now() + 3600000; 
 
-        // Correct Table Reference: users
         const updateQuery = "UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE LOWER(email) = $3";
         const updatedRows = await db.run(updateQuery, [token, expireTime, email.toLowerCase()]);
 
@@ -117,7 +103,6 @@ app.post('/forgot-password', async (req, res) => {
             from: process.env.EMAIL, to: email, subject: 'Password Reset', text: `Click the link to reset your password: ${resetLink}`
         };
 
-        // Use the imported utility function
         const transporter = createEmailTransporter();
 
         transporter.sendMail(mailOptions, (emailErr) => {
@@ -157,8 +142,6 @@ app.post('/reset-password', async (req, res) => {
             return res.render('reset-password', { token, email, message: 'reCAPTCHA verification failed. Please try again.' });
         }
 
-        // Correct Table Reference: users
-        // reset_token_expiry is INTEGER (timestamp) in schema, using Date.now()
         const user = await db.get("SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > $2", [token, Date.now()]);
 
         if (!user) {
@@ -167,7 +150,6 @@ app.post('/reset-password', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Correct Table Reference: users
         const updateQuery = "UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2";
         await db.run(updateQuery, [hashedPassword, user.id]);
 
@@ -191,12 +173,10 @@ app.use('/payments', paymentsRouter);
 app.get('/', (req, res) => res.render('index'));
 
 app.get('/signup', (req, res) => {
-    // Show flash message if available
     res.render('signup', { message: req.flash('success') || null });
 });
 
 app.get('/login', (req, res) => {
-    // Show flash message if available
     res.render('login', { message: req.flash('error') || req.flash('success') || null });
 });
 
@@ -207,8 +187,6 @@ app.get('/utilities', (req, res) => res.render('utilities'));
 
 app.get('/contact', async (req, res) => {
     try {
-        
-        // Correct Table Reference: reviews
         const reviews = await db.all(
             'SELECT name, rating, review_text, created_at FROM reviews ORDER BY created_at DESC LIMIT 4'
         );
@@ -227,7 +205,6 @@ app.get('/contact', async (req, res) => {
 
 app.post('/submit-contact', async (req, res) => {
     const { name, email, message } = req.body;
-    // Correct Table Reference: contacts
     const query = `INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)`;
 
     try {
@@ -242,13 +219,11 @@ app.post('/submit-contact', async (req, res) => {
 });
 
 app.post('/submit-review', ensureAuthenticated, async (req, res) => {
-    // Authentication Check is now middleware-enforced
     const { id: userId } = req.session.user;
     const { name, email, rating, review_text } = req.body;
 
     if (!email || !rating || !review_text) return res.redirect('/contact');
 
-    // Correct Table Reference: reviews
     const query = `INSERT INTO reviews (user_id, name, email, rating, review_text) VALUES ($1, $2, $3, $4, $5)`;
 
     try {
@@ -267,7 +242,6 @@ app.post('/submit-review', ensureAuthenticated, async (req, res) => {
 app.get('/transaction-history', ensureAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
     
-    // Correct Table References: payments (p), payerdetails (pd)
     const sql = `
     SELECT
     p.payment_id, p.subscription_name, p.amount, p.currency,
@@ -293,7 +267,6 @@ app.get('/transaction-details/:paymentId', ensureAuthenticated, async (req, res)
     const paymentId = req.params.paymentId;
     const userId = req.session.user.id;
 
-    // Correct Table References: payments (p), payerdetails (pd)
     const sql = `
     SELECT
     p.payment_id, p.subscription_name, p.amount, p.currency,
@@ -322,7 +295,6 @@ app.get('/dashboard', ensureAuthenticated, async (req, res) => {
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
 
     try {
-        // Correct Table Reference: subscriptions
         const subscriptionQuery = `
         SELECT TO_CHAR(start::date, 'MM') AS month, name, COUNT(*) AS count
         FROM subscriptions
@@ -332,7 +304,6 @@ app.get('/dashboard', ensureAuthenticated, async (req, res) => {
         `;
         subscriptionResults = await db.all(subscriptionQuery.trim(), [userId]);
 
-        // Correct Table Reference: payments
         const paymentQuery = `
         SELECT TO_CHAR(created_at::date, 'MM') AS month, subscription_name, SUM(amount) AS amount
         FROM payments
@@ -342,7 +313,6 @@ app.get('/dashboard', ensureAuthenticated, async (req, res) => {
         `;
         paymentResults = await db.all(paymentQuery.trim(), [userId]);
 
-        // Correct Table Reference: payerdetails
         const payerQuery = `
         SELECT COUNT(DISTINCT payer_email) AS "uniquePayers"
         FROM payerdetails
@@ -372,7 +342,6 @@ app.get('/notifications', ensureAuthenticated, async (req, res) => {
     const currentDate = new Date().toISOString();
     const nextWeekDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Correct Table Reference: subscriptions
     const query = `
     SELECT * FROM subscriptions
     WHERE user_id = $1 AND expiry BETWEEN $2 AND $3
