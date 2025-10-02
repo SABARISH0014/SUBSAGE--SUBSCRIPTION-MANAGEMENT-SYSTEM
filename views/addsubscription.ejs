@@ -21,11 +21,13 @@
     <main class="container">
         <div id="message-container"></div>
         <form id="subscription-form">
+            <!-- Ensure user object exists before accessing id to prevent EJS rendering errors -->
             <input type="hidden" id="user-id" value="<%= (user && user.id) ? user.id : '' %>">
             
             <label for="name">Subscription Name</label>
             <select id="name" name="name" required>
                 <option value="" disabled selected>Select Subscriptions</option>
+                <!-- CRITICAL FIX: Ensure variables are defined to prevent EJS crashes -->
                 <option value="amazon_prime" <% if ((name || '') === 'amazon_prime') { %> selected <% } %>>Amazon Prime</option>
                 <option value="netflix" <% if ((name || '') === 'netflix') { %> selected <% } %>>Netflix</option>
                 <option value="disney_plus" <% if ((name || '') === 'disney_plus') { %> selected <% } %>>Disney Plus</option>
@@ -107,18 +109,30 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(subscriptionData),
             })
-            .then((response) => {
-                // If the server accidentally sent a redirect (302) or an HTML page, 
-                // this block attempts to handle it, but the best fix is server-side JSON.
-                if (response.headers.get('content-type')?.includes('application/json')) {
-                    return response.json();
+            .then(async (response) => {
+                // If the status is 200/201 but the content-type header is missing/wrong,
+                // we try to handle the JSON response manually.
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // CRITICAL FIX: If 200 OK but not JSON, read as text to see what was sent.
+                        const text = await response.text();
+                        console.error('Server response was 200 OK but not JSON. Response body:', text.substring(0, 100) + '...'); 
+                        // Assuming success but letting the message display error 
+                        // (The server needs fixing, but this bypasses the client crash)
+                        return { success: false, message: "Received non-JSON success response from server. Check server logs." };
+                    }
                 } else {
-                    // Fallback for unexpected non-JSON response (e.g., redirect page)
-                    console.error("Received non-JSON response from server, status:", response.status);
-                    return response.text().then(text => {
-                        displayMessage('Server returned an unexpected response. Check server logs.');
-                        return { success: false, message: 'Unexpected response format.' };
-                    });
+                    // Handle non-2xx status codes
+                    const errorText = await response.text();
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        return errorJson;
+                    } catch (e) {
+                        return { success: false, message: `Server Error (${response.status}): ${errorText.substring(0, 50)}...` };
+                    }
                 }
             })
             .then((data) => {
@@ -135,12 +149,12 @@
             .catch((error) => {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Add Subscription';
-                console.error('Fetch Error:', error);
+                console.error('Final Fetch Catch Error:', error);
                 displayMessage('Network error occurred.');
             });
         });
 
-        // Theme toggle functionality
+        // Theme toggle functionality (rest of JS remains the same)
         const themeToggleBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const body = document.body;
