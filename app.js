@@ -5,9 +5,15 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const db = require('./database/connection'); // Assuming this connects to your PostgreSQL DB
 const axios = require('axios');
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer'); 
 const flash = require('connect-flash'); 
 const crypto = require('crypto');
+
+// --- CRITICAL UTILITY IMPORTS (Ensuring stability and compatibility) ---
+// This middleware is used to protect routes in app.js and your routers (e.g., subscriptionRoutes.js)
+const { ensureAuthenticated } = require('./utils/authUtils');
+// This function is needed for the password reset logic
+const { createEmailTransporter } = require('./utils/email'); 
 
 // FIX 1: Consolidate ALL router imports at the top
 const paymentsRouter = require('./routes/payments'); 
@@ -37,15 +43,6 @@ app.use(flash());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// GLOBAL MIDDLEWARE: Check for authentication and redirect to login if missing
-const ensureAuthenticated = (req, res, next) => {
-    if (req.session.user) {
-        return next();
-    }
-    // Store the original URL to redirect the user back after successful login
-    req.session.redirectTo = req.originalUrl;
-    res.redirect('/login');
-};
 
 // GLOBAL MIDDLEWARE: Make flash messages and user info available to all templates
 app.use((req, res, next) => {
@@ -64,53 +61,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// FIX 2: Encapsulated transporter creation into a function to prevent startup crash
-function createEmailTransporter() {
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_PASSWORD,
-        }
-    });
-}
+// REMOVED: Inlined createEmailTransporter and sendNotificationEmail functions.
+// They are now defined in utils/email.js and imported as needed.
 
-// FIX 3: EXPORTED email sender function for use in the notifications router
-const sendNotificationEmail = module.exports.sendNotificationEmail = async function (userId, subscription) {
-    try {
-        // Correct Table Reference: users
-        const userRow = await db.get('SELECT email FROM users WHERE id = $1', [userId]);
-
-        if (!userRow) { return; }
-
-        const userEmail = userRow.email;
-        const subject = `Subscription Expiring Soon: ${subscription.subscription_name}`;
-        const message = `Hello,\n\nYour subscription to ${subscription.subscription_name} is expiring soon on ${subscription.expiry}.\nPlease renew it to continue enjoying the benefits.\n\nBest regards,\nSubSage`;
-
-        // Transporter is created safely inside the function call stack
-        const transporter = createEmailTransporter();
-
-        const mailOptions = {
-            from: process.env.EMAIL, to: userEmail, subject: subject, text: message,
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        // Correct Table Reference: sentemails
-        const insertEmailQuery = `
-INSERT INTO sentemails (sender_email, receiver_email, subject, message, sent_at)
-VALUES ($1, $2, $3, $4, $5)
-`;
-        const timestamp = new Date().toISOString();
-
-        await db.run(insertEmailQuery.trim(), [
-            process.env.EMAIL, userEmail, subject, message, timestamp
-        ]);
-
-    } catch (error) {
-        console.error('Error in sendNotificationEmail:', error);
-    }
-};
 
 // --- AUTHENTICATION ROUTES (NON-ROUTER LOGIC: Password Reset) ---
 
@@ -157,6 +110,7 @@ app.post('/forgot-password', async (req, res) => {
             from: process.env.EMAIL, to: email, subject: 'Password Reset', text: `Click the link to reset your password: ${resetLink}`
         };
 
+        // Use the imported utility function
         const transporter = createEmailTransporter();
 
         transporter.sendMail(mailOptions, (emailErr) => {
@@ -234,14 +188,10 @@ app.get('/signup', (req, res) => {
     res.render('signup', { message: req.flash('success') || null });
 });
 
-// REMOVED: app.post('/auth/signup', ...) - Now handled by authRoutes
-
 app.get('/login', (req, res) => {
     // Show flash message if available
     res.render('login', { message: req.flash('error') || req.flash('success') || null });
 });
-
-// REMOVED: app.post('/auth/login', ...) - Now handled by authRoutes
 
 
 app.get('/entertainment', (req, res) => res.render('entertainment'));
@@ -250,6 +200,9 @@ app.get('/utilities', (req, res) => res.render('utilities'));
 
 app.get('/contact', async (req, res) => {
     try {
+        // NOTE: Contact page is generally public, but accessing reviews shouldn't require login.
+        // If posting a review requires login, use ensureAuthenticated on the POST route.
+        
         // Correct Table Reference: reviews
         const reviews = await db.all(
             'SELECT name, rating, review_text, created_at FROM reviews ORDER BY created_at DESC LIMIT 4'
@@ -283,10 +236,8 @@ app.post('/submit-contact', async (req, res) => {
     }
 });
 
-app.post('/submit-review', async (req, res) => {
-    // Authentication Check: User must be logged in to submit a review
-    if (!req.session.user) return res.redirect('/contact'); 
-
+app.post('/submit-review', ensureAuthenticated, async (req, res) => {
+    // Authentication Check is now middleware-enforced
     const { id: userId } = req.session.user;
     const { name, email, rating, review_text } = req.body;
 
@@ -361,9 +312,6 @@ app.get('/transaction-details/:paymentId', ensureAuthenticated, async (req, res)
     }
 });
 
-// Removed conflicting subscription routes, assuming subscriptionRoutes.js handles:
-// app.get('/addsubscription', ensureAuthenticated, ...)
-
 app.get('/dashboard', ensureAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
     let subscriptionResults = [], paymentResults = [], payerResults = { uniquepayers: 0 };
@@ -405,8 +353,7 @@ app.get('/dashboard', ensureAuthenticated, async (req, res) => {
 
     res.render('dashboard', {
         username: req.session.user.username,
-        // The previous message logic was simplified, keeping only one way to pass messages (flash or session)
-        message: req.session.message, 
+        message: req.session.message,
         subscriptionData: subscriptionResults,
         paymentData: paymentResults,
         uniquePayers: payerResults ? payerResults.uniquePayers : 0

@@ -1,27 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database/connection'); // Assumes db exports async functions
-// NOTE: You must have a middleware/auth.js file that exports ensureAuthenticated
-const { ensureAuthenticated } = require('../middleware/auth'); 
 
-
-// --- GET Handler for the "Add Subscription" Page ---
-// Path: /subscriptions/add
-router.get('/add', ensureAuthenticated, (req, res) => {
-    // These variables allow you to pre-select options in the form
-    const name = req.query.name || '';
-    const type = req.query.type || '';
-
-    // Renders the view file you provided: views/addSubscription.ejs
-    res.render('addSubscription', { 
-        user: req.session.user, 
-        name: name, 
-        type: type 
-    });
-});
+// CRITICAL FIX: Update path to import middleware from the utils folder
+const { ensureAuthenticated } = require('../utils/authUtils'); 
 
 
 // Route to fetch all subscriptions for the logged-in user 
+// Path: /subscriptions/manage-subscriptions
 router.get('/manage-subscriptions', ensureAuthenticated, async (req, res) => {
     // Middleware 'ensureAuthenticated' now handles the session check.
     const query = 'SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY expiry DESC';
