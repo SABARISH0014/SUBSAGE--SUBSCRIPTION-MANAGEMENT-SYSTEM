@@ -1,22 +1,25 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
+const { ensureAuthenticated } = require('../utils/authUtils'); 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // IMPORTANT: db now uses async functions (get, all, run) from the pg client
 const db = require('../database/connection'); 
 
-// Route to render payments page (FIXED - ASYNC)
-router.get('/', async (req, res) => {
-    const userId = req.session && req.session.user ? req.session.user.id : req.query.user_id;
+// CRITICAL FIX: Add ensureAuthenticated middleware and use req.session.user.id directly.
+// Path: /payments
+router.get('/', ensureAuthenticated, async (req, res) => {
+    // FIX: User ID is GUARANTEED to exist here, coming directly from the session.
+    const userId = req.session.user.id; 
 
-    if (!userId) {
-        return res.status(400).send('User ID is required.');
-    }
+    // REMOVED manual check: 
+    // if (!userId) { return res.status(400).send('User ID is required.'); }
 
     try {
         // Updated to use lowercase 'users'
         const user = await db.get('SELECT * FROM users WHERE id = $1', [userId]);
 
         if (!user) {
+            // This should ideally never happen if the user is authenticated
             return res.status(404).send('User not found.');
         }
 
