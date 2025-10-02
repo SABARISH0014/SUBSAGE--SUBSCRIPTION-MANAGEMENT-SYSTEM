@@ -9,10 +9,11 @@ const nodemailer = require('nodemailer');
 const flash = require('connect-flash'); 
 const crypto = require('crypto');
 
-// --- UTILITY IMPORTS ---
+// --- UTILITY IMPORTS (Required for stability and modularity) ---
 const { ensureAuthenticated } = require('./utils/authUtils');
 const { createEmailTransporter } = require('./utils/email'); 
 
+// Router imports
 const paymentsRouter = require('./routes/payments'); 
 const notificationsRouter = require('./routes/notifications');
 const authRoutes = require('./routes/auth');
@@ -57,6 +58,11 @@ app.use((req, res, next) => {
 
     res.locals.error = req.flash('error');
     res.locals.success = req.flash('success');
+
+    // CRITICAL: Prevent accidental rendering if middleware starts a response.
+    if (res.headersSent) {
+        return;
+    }
 
     next();
 });
@@ -376,7 +382,12 @@ app.get('/logout', (req, res) => {
     });
 });
 
-app.use((req, res) => {
+app.use((req, res, next) => {
+    // CRITICAL FIX: If headers have already been sent (meaning a response was attempted 
+    // elsewhere, likely the subscription POST handler), stop execution.
+    if (res.headersSent) {
+        return;
+    }
     res.status(404).render('404');
 });
 
