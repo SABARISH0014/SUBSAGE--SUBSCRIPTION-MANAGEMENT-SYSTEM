@@ -138,13 +138,12 @@ router.post('/add', ensureAuthenticated, async (req, res) => {
     `;
 
     try {
-        // --- FINAL ATTEMPT FIX: ISOLATE DATABASE RESPONSE ---
         // 1. Run the query and capture the result
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
         const subscriptionId = result && result.rows && result.rows[0] ? result.rows[0].id : null;
         
-        // 2. Explicitly return JSON
+        // 2. Explicitly return JSON, guaranteeing no fall-through
         return res.status(200).json({
             success: true,
             message: 'Subscription added successfully',
