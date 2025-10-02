@@ -21,28 +21,27 @@
     <main class="container">
         <div id="message-container"></div>
         <form id="subscription-form">
-            <!-- Ensure user object exists before accessing id to prevent EJS rendering errors -->
-            <input type="hidden" id="user-id" value="<%= user ? user.id : '' %>">
+            <input type="hidden" id="user-id" value="<%= (user && user.id) ? user.id : '' %>">
             
             <label for="name">Subscription Name</label>
             <select id="name" name="name" required>
                 <option value="" disabled selected>Select Subscriptions</option>
-                <option value="amazon_prime" <% if (name === 'amazon_prime') { %> selected <% } %>>Amazon Prime</option>
-                <option value="netflix" <% if (name === 'netflix') { %> selected <% } %>>Netflix</option>
-                <option value="disney_plus" <% if (name === 'disney_plus') { %> selected <% } %>>Disney Plus</option>
-                <option value="spotify" <% if (name === 'spotify') { %> selected <% } %>>Spotify</option>
-                <option value="water" <% if (name === 'water') { %> selected <% } %>>Water</option>
-                <option value="electricity" <% if (name === 'electricity') { %> selected <% } %>>Electricity</option>
-                <option value="broadband" <% if (name === 'broadband') { %> selected <% } %>>Broadband</option>
-                <option value="mobile_recharge" <% if (name === 'mobile_recharge') { %> selected <% } %>>Mobile Recharge</option>
-                <option value="gas" <% if (name === 'gas') { %> selected <% } %>>Gas</option>
+                <option value="amazon_prime" <% if ((name || '') === 'amazon_prime') { %> selected <% } %>>Amazon Prime</option>
+                <option value="netflix" <% if ((name || '') === 'netflix') { %> selected <% } %>>Netflix</option>
+                <option value="disney_plus" <% if ((name || '') === 'disney_plus') { %> selected <% } %>>Disney Plus</option>
+                <option value="spotify" <% if ((name || '') === 'spotify') { %> selected <% } %>>Spotify</option>
+                <option value="water" <% if ((name || '') === 'water') { %> selected <% } %>>Water</option>
+                <option value="electricity" <% if ((name || '') === 'electricity') { %> selected <% } %>>Electricity</option>
+                <option value="broadband" <% if ((name || '') === 'broadband') { %> selected <% } %>>Broadband</option>
+                <option value="mobile_recharge" <% if ((name || '') === 'mobile_recharge') { %> selected <% } %>>Mobile Recharge</option>
+                <option value="gas" <% if ((name || '') === 'gas') { %> selected <% } %>>Gas</option>
             </select>
 
             <label for="type">Type</label>
             <select id="type" name="type" required>
                 <option value="" disabled selected>Select Type</option>
-                <option value="entertainment" <% if (type === 'entertainment') { %> selected <% } %>>Entertainment</option>
-                <option value="utilities" <% if (type === 'utilities') { %> selected <% } %>>Utilities</option>
+                <option value="entertainment" <% if ((type || '') === 'entertainment') { %> selected <% } %>>Entertainment</option>
+                <option value="utilities" <% if ((type || '') === 'utilities') { %> selected <% } %>>Utilities</option>
             </select>
             
             <label for="start">Start Date</label>
@@ -63,7 +62,7 @@
     </footer>
 
     <script>
-        // Placeholder function to replace alert()
+        // Placeholder function for UI messages
         function displayMessage(message, type = 'error') {
             const container = document.getElementById('message-container');
             container.innerHTML = `<div class="message ${type}">${message}</div>`;
@@ -81,7 +80,7 @@
             const amount = document.getElementById('amount').value;
             const userId = document.getElementById('user-id').value;
 
-            // Validate required fields
+            // Simple validation
             if (!userId || !name || !type || !start || !expiry || !amount || isNaN(amount)) {
                 displayMessage('Please fill out all fields correctly.');
                 return;
@@ -100,15 +99,32 @@
             submitButton.disabled = true;
             submitButton.textContent = 'Submitting...';
 
-            fetch('/subscriptions/add', {
+            // FIX: Construct absolute URL using window.location.origin
+            const fetchUrl = `${window.location.origin}/subscriptions/add`;
+
+            fetch(fetchUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(subscriptionData),
             })
-            .then((response) => response.json())
+            .then((response) => {
+                // If the server accidentally sent a redirect (302) or an HTML page, 
+                // this block attempts to handle it, but the best fix is server-side JSON.
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // Fallback for unexpected non-JSON response (e.g., redirect page)
+                    console.error("Received non-JSON response from server, status:", response.status);
+                    return response.text().then(text => {
+                        displayMessage('Server returned an unexpected response. Check server logs.');
+                        return { success: false, message: 'Unexpected response format.' };
+                    });
+                }
+            })
             .then((data) => {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Add Subscription';
+                
                 if (data.success) {
                     displayMessage('Subscription added successfully!', 'success');
                     document.getElementById('subscription-form').reset();
