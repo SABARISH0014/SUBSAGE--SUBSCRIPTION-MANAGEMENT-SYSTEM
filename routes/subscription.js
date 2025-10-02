@@ -1,18 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database/connection'); // Assumes db exports async functions
+// NOTE: You must have a middleware/auth.js file that exports ensureAuthenticated
+const { ensureAuthenticated } = require('../middleware/auth'); 
 
-// Route to fetch all subscriptions for the logged-in user (FIXED - ASYNC)
-router.get('/manage-subscriptions', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
 
-    // Updated to use lowercase 'subscriptions'
+// --- GET Handler for the "Add Subscription" Page ---
+// Path: /subscriptions/add
+router.get('/add', ensureAuthenticated, (req, res) => {
+    // These variables allow you to pre-select options in the form
+    const name = req.query.name || '';
+    const type = req.query.type || '';
+
+    // Renders the view file you provided: views/addSubscription.ejs
+    res.render('addSubscription', { 
+        user: req.session.user, 
+        name: name, 
+        type: type 
+    });
+});
+
+
+// Route to fetch all subscriptions for the logged-in user 
+router.get('/manage-subscriptions', ensureAuthenticated, async (req, res) => {
+    // Middleware 'ensureAuthenticated' now handles the session check.
     const query = 'SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY expiry DESC';
     
     try {
-        // ASYNC Call: Use await db.all
         const subscriptions = await db.all(query, [req.session.user.id]);
         
         // Render the manage-subscriptions.ejs view with subscription data
@@ -23,13 +37,12 @@ router.get('/manage-subscriptions', async (req, res) => {
     }
 });
 
-// Route to render the update form (FIXED - ASYNC)
-router.get('/subscriptions/update/:id', async (req, res) => {
-    // Updated to use lowercase 'subscriptions'
+
+// Route to render the update form (Path: /subscriptions/update/:id)
+router.get('/update/:id', ensureAuthenticated, async (req, res) => {
     const query = 'SELECT * FROM subscriptions WHERE id = $1';
 
     try {
-        // ASYNC Call: Use await db.get
         const subscription = await db.get(query, [req.params.id]);
         
         if (!subscription) {
@@ -39,7 +52,6 @@ router.get('/subscriptions/update/:id', async (req, res) => {
 
         res.render('update-subscription', {
             subscription: subscription,
-            // Access type directly from the fetched object
             category: subscription.type 
         });
     } catch (err) {
@@ -48,11 +60,10 @@ router.get('/subscriptions/update/:id', async (req, res) => {
     }
 });
 
-// POST route to update subscription in the database (FIXED - ASYNC)
-router.post('/subscriptions/update/:id', async (req, res) => {
+// POST route to update subscription in the database (Path: /subscriptions/update/:id)
+router.post('/update/:id', ensureAuthenticated, async (req, res) => {
     const { name, type, start, expiry, amount } = req.body;
     
-    // Ensure the data is valid
     const startDate = new Date(start);
     const expiryDate = new Date(expiry);
     const numericAmount = parseFloat(amount);
@@ -67,39 +78,39 @@ router.post('/subscriptions/update/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // Updated to use lowercase 'subscriptions'
     const query = `UPDATE subscriptions SET name = $1, type = $2, start = $3, expiry = $4, amount = $5 WHERE id = $6`;
 
     try {
-        // ASYNC Call: Use await db.run
         await db.run(query, [name, type, start, expiry, numericAmount, req.params.id]);
 
-        res.redirect('/manage-subscriptions');
+        // Redirect path should be the full path under the mount point
+        res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error updating subscription:', err);
         return res.status(500).send('Error updating subscription');
     }
 });
 
-// Route to delete a subscription (FIXED - ASYNC)
-router.get('/subscriptions/delete/:id', async (req, res) => {
-    // Updated to use lowercase 'subscriptions'
+// Route to delete a subscription (Path: /subscriptions/delete/:id)
+router.get('/delete/:id', ensureAuthenticated, async (req, res) => {
     const query = 'DELETE FROM subscriptions WHERE id = $1';
 
     try {
-        // ASYNC Call: Use await db.run
         await db.run(query, [req.params.id]);
 
-        res.redirect('/manage-subscriptions');
+        // Redirect path should be the full path under the mount point
+        res.redirect('/subscriptions/manage-subscriptions'); 
     } catch (err) {
         console.error('Error deleting subscription:', err);
         return res.status(500).send('Error deleting subscription');
     }
 });
 
-// POST request to add a subscription (FIXED - ASYNC)
-router.post('/add', async (req, res) => {
-    const { user_id, name, type, start, expiry, amount } = req.body;
+// POST request to add a subscription (Path: /subscriptions/add)
+router.post('/add', ensureAuthenticated, async (req, res) => {
+    // FIX: Use user ID from session for safety, ignoring/overwriting body.user_id
+    const user_id = req.session.user.id;
+    const { name, type, start, expiry, amount } = req.body;
 
     // Validate that all required fields are provided
     if (!user_id || !name || !type || !start || !expiry || !amount) {
@@ -123,19 +134,14 @@ router.post('/add', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    // Updated to use lowercase 'subscriptions'
-    const query = `INSERT INTO subscriptions (user_id, name, type, start, expiry, amount) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+    const query = `INSERT INTO subscriptions (user_id, name, type, start, expiry, amount, status) VALUES ($1, $2, $3, $4, $5, $6, 'Active') RETURNING id`;
 
     try {
-        // ASYNC Call: Use await db.run
         const result = await db.run(query, [user_id, name, type, start, expiry, numericAmount]);
         
-        // Respond with success and the ID of the newly added subscription
         res.json({
             success: true,
             message: 'Subscription added successfully',
-            // Postgres insert result might not have 'this.lastID'. 
-            // We return the ID from the result of the RETURNING clause in the query.
             id: result && result.rows && result.rows[0] ? result.rows[0].id : null
         });
     } catch (err) {
